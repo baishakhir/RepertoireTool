@@ -1,0 +1,3 @@
+To build the UI, you'll need pyuic4 in your path.  Simply run make from src.
+
+To run, it's just ./driver.py from the src directory.  Have fun!
