@@ -2,6 +2,7 @@ import os
 import threading
 from difffilter import DiffFilter
 import shutil
+from ccfinderconverter import CCFinderConverter
 
 class RepertoireModel:
     def __init__(self):
@@ -48,8 +49,13 @@ class RepertoireModel:
             proj_path = self.tmpPath + os.sep + proj
             shutil.rmtree(proj_path, ignore_errors=True)
             os.mkdir(proj_path)
-            num_files = len(os.listdir(self.paths[proj]))
+            # 3 different file formats, 2 operations each (filter/convert)
+            num_operations = len(os.listdir(self.paths[proj])) * 3 * 2
+            operations_so_far = IntegerWrapper(0)
             files_so_far = 0
+
+            # First, filter the input diffs by file type, so that all c diffs
+            # are in one set of files, and similarly for java/headers
             for lang in ['java', 'cxx', 'hxx']:
                 the_filter = self.filters[lang]
                 lang_path = proj_path + os.sep + lang
@@ -58,12 +64,27 @@ class RepertoireModel:
                     if interface.cancelled():
                         return ('User cancelled processing', False)
                     interface.progress('Filtering ' + lang + ' files.',
-                            files_so_far / num_files * 3)
+                            operations_so_far.value / num_operations)
                     input_path = self.paths[proj] + os.sep + file_name
                     out_path = (lang_path + os.sep +
                             ('%04d' % i) + '.' + self.suffixes[lang])
                     if not the_filter.filterDiff(input_path, out_path):
                         return ('Error processing: ' + file_name, False)
-                    files_so_far += 1
+                    operations_so_far.incr()
+
+        # Second, change each diff into ccFinder input format
+        converter = CCFinderConverter()
+        for proj in ['proj0', 'proj1']:
+            proj_path = self.tmpPath + os.sep + proj
+            converter.convert(proj_path, operations_so_far.incr)
+
+
         return ('Processing successful', True)
 
+
+class IntegerWrapper:
+    def __init__(self, value = 0):
+        self.value = value
+
+    def incr(self):
+        self.value += 1

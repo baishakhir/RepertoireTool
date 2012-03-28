@@ -13,17 +13,19 @@ class Enum(set):
         raise AttributeError
 
 class CCFinderConverter:
+    oldConvWriter = None
+    newConvWriter = None
+    oldCodeFile   = None
+    newCodeFile   = None
+    oldDstLineNum = 0
+    newDstLineNum = 0
     convWriter = None
     dstLineNum = 0
 
-    # These lines are of interest, map them into a csv file
-    def map(self, org, target, operation):
-        #print str(org) + ':' + str(target) + ':' + operation
-        self.convWriter.writerow([target, org, operation])
-
     # process the argument line so the ccFinder can detect clone
-    def process_line(self, line, outputFile, srcLineNum):
+    def process_line(self, line, srcLineNum, changeId):
         Operations = Enum(['ADD','DELETE','MODIFIED','NOCHANGE'])
+        # default to NOCHANGE
         operation = Operations.NOCHANGE
 
         temp_line = line
@@ -52,59 +54,82 @@ class CCFinderConverter:
             temp_line = line.partition('-')[2]
             operation = Operations.DELETE
         else:
-            pass
+            temp_line = line[1:]
 
-        if (temp_line.strip().startswith('*') and
-                ((temp_line.strip() is '*') or
-                (' * ' in temp_line) or
-                (' *\t' in temp_line))):
-            return
+        if operation == Operations.NOCHANGE or operation == Operations.ADD:
+            self.newCodeFile.writelines(temp_line)
+            self.newDstLineNum += 1
+            self.newConvWriter.writerow([self.newDstLineNum, srcLineNum, operation, changeId])
+        if operation == Operations.NOCHANGE or operation == Operations.DELETE:
+            self.oldCodeFile.writelines(temp_line)
+            self.oldDstLineNum += 1
+            self.oldConvWriter.writerow([self.oldDstLineNum, srcLineNum, operation, changeId])
 
-        outputFile.writelines(temp_line)
-        self.dstLineNum += 1
-        self.map(srcLineNum, self.dstLineNum, operation)
-
-    def convert(self, parentdir, indexPrefix):
+    # reportProgress is a function that takes no arguments
+    def convert(self, parentdir, reportProgress = None):
         # validation is done, lets process some files
         for extension in ['cxx', 'hxx', 'java']:
             input_path = parentdir + '/' + extension
             conv_path = parentdir + '/' + extension + '_conv'
             cc_path = parentdir + '/' + extension + '_cc'
+            shutil.rmtree(conv_path, ignore_errors=True)
+            shutil.rmtree(cc_path, ignore_errors=True)
             os.mkdir(conv_path)
             os.mkdir(cc_path)
             for input_file in os.listdir(input_path):
                 inf = open(input_path + '/' + input_file, 'r')
-                outf = open(cc_path + '/' + input_file + '.cc', 'w')
-                convf = open(conv_path + '/' + input_file + '.conv', 'w')
-                self.convWriter = csv.writer(convf, delimiter=',')
-                self.convWriter.writerow(
-                        ['Target Line Number', 'Original Line Number', 'Operation'])
-                self.dstLineNum = 0
+                self.oldCodeFile = open(cc_path + '/' + input_file + '.old.c', 'w')
+                self.newCodeFile = open(cc_path + '/' + input_file + '.new.c', 'w')
+                self.oldConvWriter = csv.writer(open(conv_path + '/' + input_file + '.old.conv', 'w'), delimiter=',')
+                self.newConvWriter = csv.writer(open(conv_path + '/' + input_file + '.new.conv', 'w'), delimiter=',')
+                self.oldConvWriter.writerow(['Target Line Number', 'Original Line Number', 'Operation', 'Change Id'])
+                self.newConvWriter.writerow(['Target Line Number', 'Original Line Number', 'Operation', 'Change Id'])
+                self.oldDstLineNum = 0
+                self.newDstLineNum = 0
 
                 searching = False
+                changeId = 0
+                fileName = ''
                 for idx, line in enumerate(inf):
-                    if searching:
-                        if line.startswith('@@'):
-                            # most diffs start real content with @@ apparently
-                            searching = False
-                        continue
-
-                    if line.startswith(indexPrefix):
+                    if (not searching and
+                        not (line.startswith(' ') or
+                            line.startswith('+') or
+                            line.startswith('-'))):
                         searching = True
-                        # in most code, files don't have spaces
-                        # thank god unix is primitive
-                        fileName = line[line.rfind(' ') + 1:]
-                        self.convWriter.writerow([fileName])
-                        temp_line = "/* --- " + line.partition("\n")[0] + " --- */" + "\n"
-                        outf.writelines(temp_line)
-                        self.dstLineNum += 1
+                        firstSearchingLine = True
+
+                    if searching:
+                        if line.startswith('---'):
+                            # most diffs have the old file path in a line like this
+                            fileName = line[4:]
+                            firstSearchingLine = False
+                        if line.startswith('@@'):
+                            # most diffs start real content with @@
+                            searching = False
+                            changeId += 1
+                            firstSearchingLine = False
+                        if firstSearchingLine:
+                            # in most code, files don't have spaces
+                            # thank god unix is primitive
+                            self.oldConvWriter.writerow([fileName])
+                            self.newConvWriter.writerow([fileName])
+                            temp_line = "/* --- " + line.partition("\n")[0] + " --- */" + "\n"
+                            self.oldCodeFile.writelines(temp_line)
+                            self.newCodeFile.writelines(temp_line)
+                            self.oldDstLineNum += 1
+                            self.newDstLineNum += 1
+                        # go no further if we actually are searching for real content
+                        firstSearchingLine = False
                         continue
 
-                    self.process_line(line, outf, idx)
+                    # all line numbers are 1 based (not 0)
+                    self.process_line(line, idx + 1, changeId)
 
                 inf.close()
-                outf.close()
-                convf.close()
+                self.oldCodeFile.close()
+                self.newCodeFile.close()
+                if not reportProgress is None:
+                    reportProgress()
 
 
 
@@ -114,8 +139,6 @@ if __name__ == "__main__":
             help='path to directory containing only cxx, hxx, java subdirs, in turn containing the diffs we care about', metavar='FILE')
     parser.add_option('-f', '--force', dest='force_clean', default=False,
             help='remove all cc/conv subdirectories if present')
-    parser.add_option('-s', '--style', dest='style', default='svn',
-            help='look for index entries that look like svn, git, or hg (ie diff -r instead of Index:)')
     (options, args) = parser.parse_args()
 
     parentdir = options.path
@@ -149,19 +172,8 @@ if __name__ == "__main__":
         shutil.rmtree(parentdir + '/hxx_conv', ignore_errors=True)
         shutil.rmtree(parentdir + '/java_conv', ignore_errors=True)
 
-    if options.style == 'git':
-        indexPrefix = 'diff --git '
-    elif options.style == 'hg':
-        indexPrefix = 'diff -r '
-    elif options.style == 'svn':
-        indexPrefix = 'Index: '
-    else:
-        print "unknown diff style: " + options.style
-        parser.print_usage()
-        sys.exit(-1)
-
     processor = CCFinderConverter()
-    processor.convert(parentdir, indexPrefix)
+    processor.convert(parentdir)
 
 
 
