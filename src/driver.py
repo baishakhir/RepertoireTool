@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import sys
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import *
 from ui.wizard import Ui_RepWizard
 from app_model import RepertoireModel
+from worker import Worker
 
 class RepWizard(QtGui.QWizard):
     def __init__(self, parent=None):
@@ -11,11 +13,36 @@ class RepWizard(QtGui.QWizard):
         self.ui = Ui_RepWizard()
         self.ui.setupUi(self)
         self.postSetup()
-        #self.initEvents()
+        self.worker = Worker()
+        self.worker.start()
+        self.processingDone = False
+        QObject.connect(
+                self,
+                SIGNAL("processDiffs"),
+                self.worker.processDiffs,
+                Qt.QueuedConnection)
+        QObject.connect(
+                self.worker,
+                SIGNAL("progress"),
+                self.updateProgress,
+                Qt.QueuedConnection)
+        QObject.connect(
+                self.worker,
+                SIGNAL("done"),
+                self.workerDone,
+                Qt.QueuedConnection)
+        # this one isn't queued, but the underlying action
+        # is thread safe (intentionally)
+        QObject.connect(
+                self.button(QtGui.QWizard.BackButton),
+                SIGNAL("clicked()"),
+                self.worker.notifyStop)
 
     def postSetup(self):
         self.page(0).validatePage = self.validatePage0
         self.page(1).validatePage = self.validatePage1
+        self.page(2).validatePage = self.validatePage2
+        self.page(3).isComplete   = self.page3Complete
 
         self.ui.browseButton0.clicked.connect(lambda : self.pickDirectory(
             self.ui.directory0Line, 'Select diff directory 1'))
@@ -26,9 +53,13 @@ class RepWizard(QtGui.QWizard):
 
         self.ui.errorLabel0.setVisible(False)
         self.ui.errorLabel1.setVisible(False)
+        self.ui.progressLabel.setText('')
 
     def initializePage(self, i):
-        print 'Initializaing page: ' + str(i)
+        # on page 3, we have a progress bar
+        if i == 3:
+            self.emit(SIGNAL("processDiffs"), self.model)
+        print('Going to page: ' + str(i))
 
     def pickDirectory(self, line, msg):
         directory = QtGui.QFileDialog.getExistingDirectory(self, msg)
@@ -52,9 +83,53 @@ class RepWizard(QtGui.QWizard):
         self.ui.errorLabel1.setVisible(True)
         return False
 
+    def validatePage2(self):
+        javaSuffix = str(self.ui.jSuffLine.text())
+        cxxSuffix = str(self.ui.cSuffLine.text())
+        hxxSuffix = str(self.ui.hSuffLine.text())
+        self.model.setSuffixes(javaSuffix, cxxSuffix, hxxSuffix)
+        return True
+
+    def updateProgress(self, args):
+        msg, frac = args
+        self.ui.progressBar.setValue(int(frac * 100))
+        self.ui.progressLabel.setText(msg)
+
+    def workerDone(self, args):
+        msg, success = args
+        if success:
+            self.processingDone = True
+            self.ui.progressBar.setValue(100)
+            self.ui.progressLabel.setText(msg)
+        else:
+            msgBox = QtGui.QMessageBox(self)
+            msgBox.setText(msg)
+            msgBox.exec_()
+        self.page(3).emit(SIGNAL("completeChanged()"))
+
+    def page3Complete(self):
+        return self.processingDone
+
+    def setTestValues(self, proj0, proj1, tmp, j, c, h):
+        self.ui.directory0Line.setText(proj0)
+        self.ui.directory1Line.setText(proj1)
+        self.ui.tmpDirLine.setText(tmp)
+        self.ui.jSuffLine.setText(j)
+        self.ui.cSuffLine.setText(c)
+        self.ui.hSuffLine.setText(h)
+
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     myapp = RepWizard()
+    if len(sys.argv) > 1 and 'wileytest' == sys.argv[1]:
+        myapp.setTestValues(
+                '/home/wiley/ws/RepertoireTool/data/unified_free',
+                '/home/wiley/ws/RepertoireTool/data/unified_net',
+                '/home/wiley/ws/RepertoireTool/src',
+                '.java',
+                '.c',
+                '.h'
+                )
     myapp.show()
     sys.exit(app.exec_())
 

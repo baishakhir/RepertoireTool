@@ -4,13 +4,13 @@ class DiffFilter:
     def __init__(self, extension):
         self.fileEnding = '.' + extension + os.linesep
 
-    def filter(inpath, outpath):
+    def filterDiff(self, inpath, outpath):
         oneago=''
         valid=False
         sentinel = (
                 '===================================' +
                 '===================================' +
-                + os.linesep)
+                os.linesep)
         try:
             inf = open(inpath, 'r')
             outf = open(outpath, 'w')
