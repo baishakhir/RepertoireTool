@@ -55,12 +55,13 @@ class RepertoireModel:
                 lang_path = proj_path + os.sep + lang
                 os.mkdir(lang_path)
                 for i, file_name in enumerate(os.listdir(self.paths[proj])):
-                    out_path = lang_path + os.sep + ('%04d' % i) + self.suffixes[lang]
                     if interface.cancelled():
                         return ('User cancelled processing', False)
                     interface.progress('Filtering ' + lang + ' files.',
                             files_so_far / num_files * 3)
                     input_path = self.paths[proj] + os.sep + file_name
+                    out_path = (lang_path + os.sep +
+                            ('%04d' % i) + '.' + self.suffixes[lang])
                     if not the_filter.filterDiff(input_path, out_path):
                         return ('Error processing: ' + file_name, False)
                     files_so_far += 1

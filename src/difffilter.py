@@ -8,8 +8,8 @@ class DiffFilter:
         oneago=''
         valid=False
         sentinel = (
-                '===================================' +
-                '===================================' +
+                '==================================' +
+                '=================================' +
                 os.linesep)
         try:
             inf = open(inpath, 'r')
@@ -25,8 +25,10 @@ class DiffFilter:
                         valid=False
                 if valid:
                     outf.write(oneago)
-                    outf.write('\n')
                 oneago=currline
+            # the above loop misses the last line when its valid
+            if valid:
+                outf.write(oneago)
             inf.close()
             outf.close()
         except IOError:
