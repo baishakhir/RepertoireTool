@@ -3,12 +3,15 @@ import threading
 from difffilter import DiffFilter
 import shutil
 from ccfinderconverter import CCFinderConverter
+from ccfx_entrypoint import CCFXEntryPoint
 
 class RepertoireModel:
     def __init__(self):
         pass
 
     def setDiffPaths(self, path0 = None, path1 = None):
+        path0 = str(path0)
+        path1 = str(path1)
         if (not os.path.isdir(path0) or
             not os.path.isdir(path1)):
             return False
@@ -16,6 +19,7 @@ class RepertoireModel:
         return True
 
     def setTmpDirectory(self, path):
+        path = str(path)
         if not os.path.isdir(path):
             return False
         # great, we have a scratch space, lets put our own directory there
@@ -27,6 +31,9 @@ class RepertoireModel:
         return True
 
     def setSuffixes(self, jSuff = '', cSuff = '', hSuff = ''):
+        jSuff = str(jSuff)
+        cSuff = str(cSuff)
+        hSuff = str(hSuff)
         if jSuff.startswith('.'):
             jSuff = jSuff[1:]
         if cSuff.startswith('.'):
@@ -78,6 +85,28 @@ class RepertoireModel:
             proj_path = self.tmpPath + os.sep + proj
             converter.convert(proj_path, operations_so_far.incr)
 
+
+        clone_path = self.tmpPath + os.sep + 'clones'
+        shutil.rmtree(clone_path, ignore_errors=True)
+        os.mkdir(clone_path)
+        # Third, call ccfx for each directory
+        ccfx = CCFXEntryPoint('../ccFinder/ccfx')
+        worked = True
+        for lang in ['java', 'cxx', 'hxx']:
+            old_path0 = self.tmpPath + os.sep + 'proj0' + os.sep + lang + '_cc_old'
+            old_path1 = self.tmpPath + os.sep + 'proj1' + os.sep + lang + '_cc_old'
+            new_path0 = self.tmpPath + os.sep + 'proj0' + os.sep + lang + '_cc_new'
+            new_path1 = self.tmpPath + os.sep + 'proj1' + os.sep + lang + '_cc_new'
+            tmp_old_out = clone_path + os.sep + lang + '_old.ccfxd'
+            tmp_new_out = clone_path + os.sep + lang + '_new.ccfxd'
+            old_out = clone_path + os.sep + lang + '.txt'
+            new_out = clone_path + os.sep + lang + '.txt'
+            worked = (worked and
+                    ccfx.processPair(old_path0, old_path1, tmp_old_out, old_out))
+            worked = (worked and
+                ccfx.processPair(new_path0, new_path1, tmp_new_out, new_out))
+        if not worked:
+            return ('ccFinderX execution failed', False)
 
         return ('Processing successful', True)
 

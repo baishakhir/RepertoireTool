@@ -69,19 +69,25 @@ class CCFinderConverter:
     def convert(self, parentdir, reportProgress = None):
         # validation is done, lets process some files
         for extension in ['cxx', 'hxx', 'java']:
-            input_path = parentdir + '/' + extension
-            conv_path = parentdir + '/' + extension + '_conv'
-            cc_path = parentdir + '/' + extension + '_cc'
-            shutil.rmtree(conv_path, ignore_errors=True)
-            shutil.rmtree(cc_path, ignore_errors=True)
-            os.mkdir(conv_path)
-            os.mkdir(cc_path)
+            input_path = parentdir + os.sep + extension
+            old_conv_path = parentdir + os.sep + extension + '_conv_old'
+            new_conv_path = parentdir + os.sep + extension + '_conv_new'
+            old_cc_path = parentdir + os.sep + extension + '_cc_old'
+            new_cc_path = parentdir + os.sep + extension + '_cc_new'
+            shutil.rmtree(old_conv_path, ignore_errors=True)
+            shutil.rmtree(new_conv_path, ignore_errors=True)
+            shutil.rmtree(old_cc_path, ignore_errors=True)
+            shutil.rmtree(new_cc_path, ignore_errors=True)
+            os.mkdir(old_conv_path)
+            os.mkdir(new_conv_path)
+            os.mkdir(old_cc_path)
+            os.mkdir(new_cc_path)
             for input_file in os.listdir(input_path):
-                inf = open(input_path + '/' + input_file, 'r')
-                self.oldCodeFile = open(cc_path + '/' + input_file + '.old.c', 'w')
-                self.newCodeFile = open(cc_path + '/' + input_file + '.new.c', 'w')
-                self.oldConvWriter = csv.writer(open(conv_path + '/' + input_file + '.old.conv', 'w'), delimiter=',')
-                self.newConvWriter = csv.writer(open(conv_path + '/' + input_file + '.new.conv', 'w'), delimiter=',')
+                inf = open(input_path + os.sep + input_file, 'r')
+                self.oldCodeFile = open(old_cc_path + os.sep + input_file, 'w')
+                self.newCodeFile = open(new_cc_path + os.sep + input_file, 'w')
+                self.oldConvWriter = csv.writer(open(old_conv_path + os.sep + input_file + '.old.conv', 'w'), delimiter=',')
+                self.newConvWriter = csv.writer(open(new_conv_path + os.sep + input_file + '.new.conv', 'w'), delimiter=',')
                 self.oldConvWriter.writerow(['Target Line Number', 'Original Line Number', 'Operation', 'Change Id'])
                 self.newConvWriter.writerow(['Target Line Number', 'Original Line Number', 'Operation', 'Change Id'])
                 self.oldDstLineNum = 0
