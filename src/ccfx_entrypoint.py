@@ -5,12 +5,14 @@ class CCFXEntryPoint:
         self.contextSize = context_sz
         self.ccfxPath = ccfx_path
 
-    def processPair(self, dir0, dir1, tmp_out_path, out_path, code_type = 'cpp'):
+    def processPair(self, dir0, dir1, tmp_out_path, out_path, lang = 'java'):
         worked = True
+        if lang != 'java':
+            lang = 'cpp'
         cmd_str = (
             '{0} d {1} -v -dn {2}  -is -dn {3} -w f-w-g+ -b {4} -o {5}'.format(
                 self.ccfxPath,
-                code_type,
+                lang,
                 dir0,
                 dir1,
                 self.contextSize,

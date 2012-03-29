@@ -52,6 +52,8 @@ class RepertoireModel:
                 }
 
     def filterDiffs(self, interface):
+        got_some = {'java':True, 'cxx':True, 'hxx':True}
+        haveJava = haveC = haveH = False
         for proj in ['proj0', 'proj1']:
             proj_path = self.tmpPath + os.sep + proj
             shutil.rmtree(proj_path, ignore_errors=True)
@@ -75,7 +77,12 @@ class RepertoireModel:
                     input_path = self.paths[proj] + os.sep + file_name
                     out_path = (lang_path + os.sep +
                             ('%04d' % i) + '.' + self.suffixes[lang])
-                    if not the_filter.filterDiff(input_path, out_path):
+                    (ok, gotsome) = the_filter.filterDiff(input_path, out_path)
+                    # this is actually tricky, if we got some output for java
+                    # in one project but not the other, then we know that
+                    # there can't be any clones
+                    got_some[lang] = got_some[lang] and gotsome
+                    if not ok:
                         return ('Error processing: ' + file_name, False)
                     operations_so_far.incr()
 
@@ -93,6 +100,8 @@ class RepertoireModel:
         ccfx = CCFXEntryPoint('../ccFinder/ccfx')
         worked = True
         for lang in ['java', 'cxx', 'hxx']:
+            if not got_some[lang]:
+                continue
             old_path0 = self.tmpPath + os.sep + 'proj0' + os.sep + lang + '_cc_old'
             old_path1 = self.tmpPath + os.sep + 'proj1' + os.sep + lang + '_cc_old'
             new_path0 = self.tmpPath + os.sep + 'proj0' + os.sep + lang + '_cc_new'
@@ -104,7 +113,7 @@ class RepertoireModel:
             worked = (worked and
                     ccfx.processPair(old_path0, old_path1, tmp_old_out, old_out, lang))
             worked = (worked and
-                ccfx.processPair(new_path0, new_path1, tmp_new_out, new_out))
+                ccfx.processPair(new_path0, new_path1, tmp_new_out, new_out, lang))
         if not worked:
             return ('ccFinderX execution failed', False)
 

@@ -5,6 +5,7 @@ class DiffFilter:
         self.fileEnding = '.' + extension + os.linesep
 
     def filterDiff(self, inpath, outpath):
+        gotsome = False
         oneago=''
         valid=False
         sentinel = (
@@ -24,13 +25,15 @@ class DiffFilter:
                     else:
                         valid=False
                 if valid:
+                    gotsome = True
                     outf.write(oneago)
                 oneago=currline
             # the above loop misses the last line when its valid
             if valid:
+                gotsome = True
                 outf.write(oneago)
             inf.close()
             outf.close()
         except IOError:
-            return False
-        return True
+            return (False, gotsome)
+        return (True, gotsome)
