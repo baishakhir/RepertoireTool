@@ -102,7 +102,7 @@ class RepertoireModel:
             old_out = clone_path + os.sep + lang + '.txt'
             new_out = clone_path + os.sep + lang + '.txt'
             worked = (worked and
-                    ccfx.processPair(old_path0, old_path1, tmp_old_out, old_out))
+                    ccfx.processPair(old_path0, old_path1, tmp_old_out, old_out, lang))
             worked = (worked and
                 ccfx.processPair(new_path0, new_path1, tmp_new_out, new_out))
         if not worked:
