@@ -1,4 +1,5 @@
 import os
+import shutil
 
 class PathBuilder:
     PROJ0 = 'proj0'
@@ -10,7 +11,7 @@ class PathBuilder:
         if force_clean:
             for f in os.listdir(self.root):
                 # doesn't clean out normal files, but I'll let it slide
-                shutil.rmtree(f, ignore_errors=True)
+                shutil.rmtree(self.root + os.sep + f, ignore_errors = True)
         self.exists = []
 
     def makeExist(self, path):
