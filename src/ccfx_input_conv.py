@@ -13,7 +13,7 @@ class Enum(set):
             return name
         raise AttributeError
 
-class CCFinderConverter:
+class CCFXInputConverter:
     oldConvWriter = None
     newConvWriter = None
     oldCodeFile   = None

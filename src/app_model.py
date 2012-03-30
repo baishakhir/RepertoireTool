@@ -2,8 +2,9 @@ import os
 import threading
 from difffilter import DiffFilter
 import shutil
-from ccfinderconverter import CCFinderConverter
+from ccfx_input_conv import CCFXInputConverter
 from ccfx_entrypoint import CCFXEntryPoint
+from ccfx_output_conv import CCFXOutputConverter
 from path_builder import PathBuilder
 
 class RepertoireModel:
@@ -85,7 +86,7 @@ class RepertoireModel:
                     operations_so_far.incr()
 
         # Second, change each diff into ccFinder input format
-        converter = CCFinderConverter()
+        converter = CCFXInputConverter()
         converter.convert(pb, operations_so_far.incr)
 
 
