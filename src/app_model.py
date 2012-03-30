@@ -71,8 +71,8 @@ class RepertoireModel:
                 for i, file_name in enumerate(os.listdir(self.paths[proj])):
                     if interface.cancelled():
                         return ('User cancelled processing', False)
-                    interface.progress('Filtering ' + lang + ' files.',
-                            operations_so_far.value / num_operations)
+                    interface.progress('Filtering {0} files'.format(lang),
+                            operations_so_far.value / float(num_operations))
                     input_path = self.paths[proj] + os.sep + file_name
                     out_path = (pb.getFilterOutputPath(proj, lang) +
                             ('%04d' % i) + '.' + self.suffixes[lang])
@@ -87,7 +87,10 @@ class RepertoireModel:
 
         # Second, change each diff into ccFinder input format
         converter = CCFXInputConverter()
-        converter.convert(pb, operations_so_far.incr)
+        callback = lambda: interface.progress(
+                'Converting to ccfx input format',
+                operations_so_far.incr() / float(num_operations))
+        converter.convert(pb, callback)
 
 
         clone_path = pb.getCCFXOutputPath()
@@ -121,3 +124,4 @@ class IntegerWrapper:
 
     def incr(self):
         self.value += 1
+        return self.value

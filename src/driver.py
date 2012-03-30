@@ -96,6 +96,7 @@ class RepWizard(QtGui.QWizard):
         msg, frac = args
         self.ui.progressBar.setValue(int(frac * 100))
         self.ui.progressLabel.setText(msg)
+        print('called progress ' + str(frac))
 
     def workerDone(self, args):
         msg, success = args
