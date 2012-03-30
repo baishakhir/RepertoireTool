@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import sys
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import *
+from PyQt4.QtCore import Qt, QThread, QObject
 from ui.wizard import Ui_RepWizard
 from app_model import RepertoireModel
-from worker import Worker
+from worker import WorkDriver
 
 class RepWizard(QtGui.QWizard):
     def __init__(self, parent=None):
@@ -13,30 +13,32 @@ class RepWizard(QtGui.QWizard):
         self.ui = Ui_RepWizard()
         self.ui.setupUi(self)
         self.postSetup()
-        self.worker = Worker()
-        self.worker.start()
+        self.workerThread = QThread()
+        self.workerThread.start()
+        self.workDriver = WorkDriver(self.model)
+        self.workDriver.moveToThread(self.workerThread)
         self.processingDone = False
         QObject.connect(
                 self,
-                SIGNAL("processDiffs"),
-                self.worker.processDiffs,
+                QtCore.SIGNAL("processDiffs"),
+                self.workDriver.processDiffs,
                 Qt.QueuedConnection)
         QObject.connect(
-                self.worker,
-                SIGNAL("progress"),
+                self.workDriver,
+                QtCore.SIGNAL("progress"),
                 self.updateProgress,
                 Qt.QueuedConnection)
         QObject.connect(
-                self.worker,
-                SIGNAL("done"),
+                self.workDriver,
+                QtCore.SIGNAL("done"),
                 self.workerDone,
                 Qt.QueuedConnection)
         # this one isn't queued, but the underlying action
         # is thread safe (intentionally)
         QObject.connect(
                 self.button(QtGui.QWizard.BackButton),
-                SIGNAL("clicked()"),
-                self.worker.notifyStop)
+                QtCore.SIGNAL("clicked()"),
+                self.workDriver.notifyStop)
 
     def postSetup(self):
         self.page(0).validatePage = self.validatePage0
@@ -58,7 +60,7 @@ class RepWizard(QtGui.QWizard):
     def initializePage(self, i):
         # on page 3, we have a progress bar
         if i == 3:
-            self.emit(SIGNAL("processDiffs"), self.model)
+            self.emit(QtCore.SIGNAL("processDiffs"), self.model)
         print('Going to page: ' + str(i))
 
     def pickDirectory(self, line, msg):
@@ -105,7 +107,7 @@ class RepWizard(QtGui.QWizard):
             msgBox = QtGui.QMessageBox(self)
             msgBox.setText(msg)
             msgBox.exec_()
-        self.page(3).emit(SIGNAL("completeChanged()"))
+        self.page(3).emit(QtCore.SIGNAL("completeChanged()"))
 
     def page3Complete(self):
         return self.processingDone

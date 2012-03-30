@@ -14,10 +14,11 @@ class AtomicValue:
             v = self.value
         return v
 
-class Worker(QThread):
-    def __init__(self):
-        QThread.__init__(self)
+class WorkDriver(QObject):
+    def __init__(self, app):
+        QObject.__init__(self)
         self.stop = AtomicValue()
+        self.model = app
 
     def notifyStop(self):
         self.stop.set(True)
@@ -35,5 +36,3 @@ class Worker(QThread):
         msg, success = app_model.filterDiffs(self)
         self.emit(SIGNAL("done"), (msg, success))
 
-    def run(self):
-        self.exec_()
