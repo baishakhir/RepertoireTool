@@ -4,6 +4,7 @@ import sys
 import os
 import csv
 from optparse import OptionParser
+from path_builder import PathBuilder
 import shutil
 
 class Enum(set):
@@ -59,127 +60,100 @@ class CCFinderConverter:
         if operation == Operations.NOCHANGE or operation == Operations.ADD:
             self.newCodeFile.writelines(temp_line)
             self.newDstLineNum += 1
-            self.newConvWriter.writerow([self.newDstLineNum, srcLineNum, operation, changeId])
+            self.newConvWriter.writerow(
+                    [self.newDstLineNum, srcLineNum, operation, changeId])
         if operation == Operations.NOCHANGE or operation == Operations.DELETE:
             self.oldCodeFile.writelines(temp_line)
             self.oldDstLineNum += 1
-            self.oldConvWriter.writerow([self.oldDstLineNum, srcLineNum, operation, changeId])
+            self.oldConvWriter.writerow(
+                    [self.oldDstLineNum, srcLineNum, operation, changeId])
 
     # reportProgress is a function that takes no arguments
-    def convert(self, parentdir, reportProgress = None):
-        # validation is done, lets process some files
-        for extension in ['cxx', 'hxx', 'java']:
-            input_path = parentdir + os.sep + extension
-            old_conv_path = parentdir + os.sep + extension + '_conv_old'
-            new_conv_path = parentdir + os.sep + extension + '_conv_new'
-            old_cc_path = parentdir + os.sep + extension + '_cc_old'
-            new_cc_path = parentdir + os.sep + extension + '_cc_new'
-            shutil.rmtree(old_conv_path, ignore_errors=True)
-            shutil.rmtree(new_conv_path, ignore_errors=True)
-            shutil.rmtree(old_cc_path, ignore_errors=True)
-            shutil.rmtree(new_cc_path, ignore_errors=True)
-            os.mkdir(old_conv_path)
-            os.mkdir(new_conv_path)
-            os.mkdir(old_cc_path)
-            os.mkdir(new_cc_path)
-            for input_file in os.listdir(input_path):
-                inf = open(input_path + os.sep + input_file, 'r')
-                self.oldCodeFile = open(old_cc_path + os.sep + input_file, 'w')
-                self.newCodeFile = open(new_cc_path + os.sep + input_file, 'w')
-                self.oldConvWriter = csv.writer(open(old_conv_path + os.sep + input_file + '.old.conv', 'w'), delimiter=',')
-                self.newConvWriter = csv.writer(open(new_conv_path + os.sep + input_file + '.new.conv', 'w'), delimiter=',')
-                self.oldConvWriter.writerow(['Target Line Number', 'Original Line Number', 'Operation', 'Change Id'])
-                self.newConvWriter.writerow(['Target Line Number', 'Original Line Number', 'Operation', 'Change Id'])
-                self.oldDstLineNum = 0
-                self.newDstLineNum = 0
+    def convert(self, path_builder, reportProgress = None):
+        for proj in [PathBuilder.PROJ0, PathBuilder.PROJ1]:
+            for lang in ['cxx', 'hxx', 'java']:
+                input_path = path_builder.getFilterOutputPath(proj, lang)
+                old_conv_path = path_builder.getLineMapPath(proj, lang, False)
+                new_conv_path = path_builder.getLineMapPath(proj, lang, True)
+                old_cc_path = path_builder.getCCFXInputPath(proj, lang, False)
+                new_cc_path = path_builder.getCCFXInputPath(proj, lang, True)
+                shutil.rmtree(old_conv_path, ignore_errors=True)
+                shutil.rmtree(new_conv_path, ignore_errors=True)
+                shutil.rmtree(old_cc_path, ignore_errors=True)
+                shutil.rmtree(new_cc_path, ignore_errors=True)
+                os.mkdir(old_conv_path)
+                os.mkdir(new_conv_path)
+                os.mkdir(old_cc_path)
+                os.mkdir(new_cc_path)
+                for input_file in os.listdir(input_path):
+                    inf = open(input_path + input_file, 'r')
+                    self.oldCodeFile = open(old_cc_path + input_file, 'w')
+                    self.newCodeFile = open(new_cc_path + input_file, 'w')
+                    self.oldConvWriter = csv.writer(
+                            open(old_conv_path + input_file + '.old.conv', 'w'),
+                            delimiter=',')
+                    self.newConvWriter = csv.writer(
+                            open(new_conv_path + input_file + '.new.conv', 'w'),
+                            delimiter=',')
+                    self.oldConvWriter.writerow(
+                            ['Target Line Number',
+                            'Original Line Number',
+                            'Operation', 'Change Id'
+                            ])
+                    self.newConvWriter.writerow(
+                            ['Target Line Number',
+                                'Original Line Number',
+                                'Operation',
+                                'Change Id'
+                                ])
+                    self.oldDstLineNum = 0
+                    self.newDstLineNum = 0
 
-                searching = False
-                changeId = 0
-                fileName = ''
-                for idx, line in enumerate(inf):
-                    if (not searching and
-                        not (line.startswith(' ') or
-                            line.startswith('+') or
-                            line.startswith('-'))):
-                        searching = True
-                        firstSearchingLine = True
+                    searching = False
+                    changeId = 0
+                    fileName = ''
+                    for idx, line in enumerate(inf):
+                        if (not searching and
+                            not (line.startswith(' ') or
+                                line.startswith('+') or
+                                line.startswith('-'))):
+                            searching = True
+                            firstSearchingLine = True
 
-                    if searching:
-                        if line.startswith('---'):
-                            # most diffs have the old file path in a line like this
-                            fileName = line[4:]
+                        if searching:
+                            if line.startswith('---'):
+                                # diffs have the old file path in this line
+                                fileName = line[4:]
+                                firstSearchingLine = False
+                            if line.startswith('@@'):
+                                # diffs start real content with @@
+                                searching = False
+                                changeId += 1
+                                firstSearchingLine = False
+                            if firstSearchingLine:
+                                self.oldConvWriter.writerow([fileName])
+                                self.newConvWriter.writerow([fileName])
+                                temp_line = (
+                                        "/* --- " +
+                                        line.partition("\n")[0] +
+                                        " --- */" +
+                                        "\n"
+                                        )
+                                self.oldCodeFile.writelines(temp_line)
+                                self.newCodeFile.writelines(temp_line)
+                                self.oldDstLineNum += 1
+                                self.newDstLineNum += 1
+
                             firstSearchingLine = False
-                        if line.startswith('@@'):
-                            # most diffs start real content with @@
-                            searching = False
-                            changeId += 1
-                            firstSearchingLine = False
-                        if firstSearchingLine:
-                            # in most code, files don't have spaces
-                            # thank god unix is primitive
-                            self.oldConvWriter.writerow([fileName])
-                            self.newConvWriter.writerow([fileName])
-                            temp_line = "/* --- " + line.partition("\n")[0] + " --- */" + "\n"
-                            self.oldCodeFile.writelines(temp_line)
-                            self.newCodeFile.writelines(temp_line)
-                            self.oldDstLineNum += 1
-                            self.newDstLineNum += 1
-                        # go no further if we actually are searching for real content
-                        firstSearchingLine = False
-                        continue
+                            continue
 
-                    # all line numbers are 1 based (not 0)
-                    self.process_line(line, idx + 1, changeId)
+                        # all line numbers are 1 based (not 0)
+                        self.process_line(line, idx + 1, changeId)
 
-                inf.close()
-                self.oldCodeFile.close()
-                self.newCodeFile.close()
-                if not reportProgress is None:
-                    reportProgress()
-
-
-
-if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option('-p', '--path', dest='path', default='thisdirectorydoesnotexist',
-            help='path to directory containing only cxx, hxx, java subdirs, in turn containing the diffs we care about', metavar='FILE')
-    parser.add_option('-f', '--force', dest='force_clean', default=False,
-            help='remove all cc/conv subdirectories if present')
-    (options, args) = parser.parse_args()
-
-    parentdir = options.path
-    if not os.path.exists(parentdir):
-        print 'could not find directory: ' + parentdir
-        print 'please use the --path option'
-        parser.print_usage()
-        sys.exit(-1)
-
-    subdirs = os.listdir(parentdir)
-    if not 'cxx' in subdirs or not 'hxx' in subdirs or not 'java' in subdirs:
-        print "didn't find cxx, hxx, or java subdirectory in " + parentdir
-        parser.print_usage()
-        sys.exit(-1)
-
-    if not options.force_clean:
-        if 'cxx_cc' in subdirs or 'hxx_cc' in subdirs or 'java_cc' in subdirs:
-            print 'found *_cc directory, but should not have in ' + parentdir
-            parser.print_usage()
-            sys.exit(-1)
-
-        if 'cxx_conv' in subdirs or 'hxx_conv' in subdirs or 'java_conv' in subdirs:
-            print 'found *_conv directory, but should not have in ' + parentdir
-            parser.print_usage()
-            sys.exit(-1)
-    else:
-        shutil.rmtree(parentdir + '/cxx_cc', ignore_errors=True)
-        shutil.rmtree(parentdir + '/hxx_cc', ignore_errors=True)
-        shutil.rmtree(parentdir + '/java_cc', ignore_errors=True)
-        shutil.rmtree(parentdir + '/cxx_conv', ignore_errors=True)
-        shutil.rmtree(parentdir + '/hxx_conv', ignore_errors=True)
-        shutil.rmtree(parentdir + '/java_conv', ignore_errors=True)
-
-    processor = CCFinderConverter()
-    processor.convert(parentdir)
-
+                    inf.close()
+                    self.oldCodeFile.close()
+                    self.newCodeFile.close()
+                    if not reportProgress is None:
+                        reportProgress()
 
 

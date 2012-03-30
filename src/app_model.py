@@ -4,6 +4,7 @@ from difffilter import DiffFilter
 import shutil
 from ccfinderconverter import CCFinderConverter
 from ccfx_entrypoint import CCFXEntryPoint
+from path_builder import PathBuilder
 
 class RepertoireModel:
     def __init__(self):
@@ -54,28 +55,25 @@ class RepertoireModel:
     def filterDiffs(self, interface):
         got_some = {'java':True, 'cxx':True, 'hxx':True}
         haveJava = haveC = haveH = False
-        for proj in ['proj0', 'proj1']:
-            proj_path = self.tmpPath + os.sep + proj
-            shutil.rmtree(proj_path, ignore_errors=True)
-            os.mkdir(proj_path)
-            # 3 different file formats, 2 operations each (filter/convert)
-            num_operations = len(os.listdir(self.paths[proj])) * 3 * 2
-            operations_so_far = IntegerWrapper(0)
-            files_so_far = 0
+        pb = PathBuilder(self.tmpPath, force_clean = True)
 
-            # First, filter the input diffs by file type, so that all c diffs
-            # are in one set of files, and similarly for java/headers
+        # 3 different file formats, 2 operations each (filter/convert)
+        num_operations = len(os.listdir(self.paths['proj0'])) * 3 * 2
+        num_operations += len(os.listdir(self.paths['proj1'])) * 3 * 2
+        operations_so_far = IntegerWrapper(0)
+
+        # First, filter the input diffs by file type, so that all c diffs
+        # are in one set of files, and similarly for java/headers
+        for proj in ['proj0', 'proj1']:
             for lang in ['java', 'cxx', 'hxx']:
                 the_filter = self.filters[lang]
-                lang_path = proj_path + os.sep + lang
-                os.mkdir(lang_path)
                 for i, file_name in enumerate(os.listdir(self.paths[proj])):
                     if interface.cancelled():
                         return ('User cancelled processing', False)
                     interface.progress('Filtering ' + lang + ' files.',
                             operations_so_far.value / num_operations)
                     input_path = self.paths[proj] + os.sep + file_name
-                    out_path = (lang_path + os.sep +
+                    out_path = (pb.getFilterOutputPath(proj, lang) +
                             ('%04d' % i) + '.' + self.suffixes[lang])
                     (ok, gotsome) = the_filter.filterDiff(input_path, out_path)
                     # this is actually tricky, if we got some output for java
@@ -88,26 +86,22 @@ class RepertoireModel:
 
         # Second, change each diff into ccFinder input format
         converter = CCFinderConverter()
-        for proj in ['proj0', 'proj1']:
-            proj_path = self.tmpPath + os.sep + proj
-            converter.convert(proj_path, operations_so_far.incr)
+        converter.convert(pb, operations_so_far.incr)
 
 
-        clone_path = self.tmpPath + os.sep + 'clones'
-        shutil.rmtree(clone_path, ignore_errors=True)
-        os.mkdir(clone_path)
+        clone_path = pb.getCCFXOutputPath()
         # Third, call ccfx for each directory
         ccfx = CCFXEntryPoint('../ccFinder/ccfx')
         worked = True
         for lang in ['java', 'cxx', 'hxx']:
             if not got_some[lang]:
                 continue
-            old_path0 = self.tmpPath + os.sep + 'proj0' + os.sep + lang + '_cc_old'
-            old_path1 = self.tmpPath + os.sep + 'proj1' + os.sep + lang + '_cc_old'
-            new_path0 = self.tmpPath + os.sep + 'proj0' + os.sep + lang + '_cc_new'
-            new_path1 = self.tmpPath + os.sep + 'proj1' + os.sep + lang + '_cc_new'
-            tmp_old_out = clone_path + os.sep + lang + '_old.ccfxd'
-            tmp_new_out = clone_path + os.sep + lang + '_new.ccfxd'
+            old_path0 = pb.getCCFXInputPath(PathBuilder.PROJ0, lang, False)
+            old_path1 = pb.getCCFXInputPath(PathBuilder.PROJ1, lang, False)
+            new_path0 = pb.getCCFXInputPath(PathBuilder.PROJ0, lang, True)
+            new_path1 = pb.getCCFXInputPath(PathBuilder.PROJ1, lang, True)
+            tmp_old_out = clone_path + lang + '_old.ccfxd'
+            tmp_new_out = clone_path + lang + '_new.ccfxd'
             old_out = clone_path + os.sep + lang + '.txt'
             new_out = clone_path + os.sep + lang + '.txt'
             worked = (worked and
