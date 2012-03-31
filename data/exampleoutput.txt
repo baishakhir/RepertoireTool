@@ -1,0 +1,8 @@
+source_files {
+1	/home/bray/RepertoireTool/data/context_free/rgephy_free.c	62
+2	/home/bray/RepertoireTool/data/context_net/rgephy_net.c	102
+}
+clone_pairs {
+1	1.42-49	2.81-88	(8 : 8)
+1	2.81-88	1.42-49	(8 : 8)
+}
