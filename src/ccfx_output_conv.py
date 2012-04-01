@@ -84,7 +84,8 @@ def convert_ccfx_output(pb, lang, is_new):
             raise Exception(
                     "Couldn't find meta information for file: {0}".format(
                         path))
-        files[fileIdx] = path
+        meta = metaDB.getMetaForPath(path)
+        files[fileIdx] = meta.filterOutput
 
     clones = {}
     for cloneIdx, (clone1, clone2) in ccfx_out.getCloneIter():
