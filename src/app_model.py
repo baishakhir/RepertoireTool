@@ -4,7 +4,7 @@ from difffilter import DiffFilter
 import shutil
 from ccfx_input_conv import CCFXInputConverter
 from ccfx_entrypoint import CCFXEntryPoint
-from ccfx_output_conv import CCFXOutputConverter
+from ccfx_output_conv import convert_ccfx_output
 from path_builder import PathBuilder
 
 class RepertoireModel:
@@ -121,11 +121,16 @@ class RepertoireModel:
 
         # Fourth, build up our database of clones
 
-        final_converter = CCFXOutputConverter()
         for lang in ['java', 'cxx', 'hxx']:
             if not got_some[lang]:
                 continue
-            final_converter.buildMapping(pb, lang)
+            for is_new in [True, False]:
+                output = convert_ccfx_output(pb, lang, is_new)
+                rep_out_path = pb.getRepertoireOutputPath(lang, is_new)
+                suffix = '_old.txt'
+                if is_new:
+                    suffix = '_new.txt'
+                output.writeToFile(rep_out_path + lang + suffix)
 
         return ('Processing successful', True)
 

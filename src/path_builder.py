@@ -77,3 +77,9 @@ class PathBuilder:
                 return f
         raise Exception("Couldn't find prep file for diff with name: {0}".format(name))
 
+    def getRepertoireOutputPath(self, lang, is_new):
+        path = self.root + os.sep + 'repertoire' + os.sep
+        self.makeExist(path)
+        return path
+
+

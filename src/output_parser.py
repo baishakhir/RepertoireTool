@@ -1,4 +1,5 @@
 import re
+import os
 
 class RepertoireOutput:
     def __init__(self):
@@ -44,18 +45,33 @@ class RepertoireOutput:
 
                 self.clones[int(idx)] = (cloneTuple1, cloneTuple2)
 
+    def loadFromData(self, files, clones):
+        self.files = files
+        self.clones = clones
+
     def writeToFile(self, output_path):
         out = open(output_path, 'w')
         out.write("source_files {")
+        out.write(os.linesep)
         for k,v in self.files.iteritems():
             out.write("{0}\t{1}\t{2}".format(k, v, 0))
+            out.write(os.linesep)
         out.write("}")
+        out.write(os.linesep)
         out.write("clone_pairs {")
+        out.write(os.linesep)
         for k,v in self.clones.iteritems():
             out.write("{0}\t{1}.{2}-{3}\t{4}.{5}-{6}".format(
                 k,
                 v[0][0], v[0][1], v[0][2],
                 v[1][0], v[1][1], v[1][2]))
+            out.write(os.linesep)
+        out.write("}")
+        out.write(os.linesep)
+        out.close()
+
+    def getFilePath(self, fidx):
+        return self.files.get(fidx, None)
 
     def getFileIter(self):
         return self.files.iteritems()

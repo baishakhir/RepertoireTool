@@ -38,7 +38,7 @@ class RepOutput(QtGui.QMainWindow):
         fname2 = self.fileList[int(indx2)-1]
         clone1 = fname1 + "." + cl1
         clone2 = fname2 + "." + cl2
-        args = "./diff_display.py " + fname1 + " " + fname2
+        args = "./display_diff.py " + fname1 + " " + fname2
         print args
         os.system(args)
 #        print clone1
