@@ -104,16 +104,28 @@ class RepertoireModel:
             old_path1 = pb.getCCFXInputPath(PathBuilder.PROJ1, lang, False)
             new_path0 = pb.getCCFXInputPath(PathBuilder.PROJ0, lang, True)
             new_path1 = pb.getCCFXInputPath(PathBuilder.PROJ1, lang, True)
-            tmp_old_out = clone_path + lang + '_old.ccfxd'
-            tmp_new_out = clone_path + lang + '_new.ccfxd'
-            old_out = clone_path + os.sep + lang + '.txt'
-            new_out = clone_path + os.sep + lang + '.txt'
-            worked = (worked and
-                    ccfx.processPair(old_path0, old_path1, tmp_old_out, old_out, lang))
-            worked = (worked and
-                ccfx.processPair(new_path0, new_path1, tmp_new_out, new_out, lang))
+            tmp_old_out = clone_path + pb.getCCFXOutputFileName(
+                    lang, is_new = False, is_tmp = True)
+            tmp_new_out = clone_path + pb.getCCFXOutputFileName(
+                    lang, is_new = True, is_tmp = True)
+            old_out = clone_path + pb.getCCFXOutputFileName(
+                    lang, is_new = False, is_tmp = False)
+            new_out = clone_path + pb.getCCFXOutputFileName(
+                    lang, is_new = True, is_tmp = False)
+            worked = worked and ccfx.processPair(
+                    old_path0, old_path1, tmp_old_out, old_out, lang)
+            worked = worked and ccfx.processPair(
+                    new_path0, new_path1, tmp_new_out, new_out, lang)
         if not worked:
             return ('ccFinderX execution failed', False)
+
+        # Fourth, build up our database of clones
+
+        final_converter = CCFXOutputConverter()
+        for lang in ['java', 'cxx', 'hxx']:
+            if not got_some[lang]:
+                continue
+            final_converter.buildMapping(pb, lang)
 
         return ('Processing successful', True)
 

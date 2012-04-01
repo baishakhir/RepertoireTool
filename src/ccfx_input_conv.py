@@ -90,10 +90,12 @@ class CCFXInputConverter:
                     self.oldCodeFile = open(old_cc_path + input_file, 'w')
                     self.newCodeFile = open(new_cc_path + input_file, 'w')
                     self.oldConvWriter = csv.writer(
-                            open(old_conv_path + input_file + '.old.conv', 'w'),
+                            open(old_conv_path +
+                                path_builder.makeLineMapFileName(input_file), 'w'),
                             delimiter=',')
                     self.newConvWriter = csv.writer(
-                            open(new_conv_path + input_file + '.new.conv', 'w'),
+                            open(new_conv_path +
+                                path_builder.makeLineMapFileName(input_file), 'w'),
                             delimiter=',')
                     self.oldConvWriter.writerow(
                             ['Target Line Number',

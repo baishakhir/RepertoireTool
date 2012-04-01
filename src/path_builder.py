@@ -50,3 +50,28 @@ class PathBuilder:
         self.makeExist(path)
         return path
 
+    def makeLineMapFileName(self, old_name):
+        return old_name.partition('.')[0] + '.conv'
+
+    def getCCXFPrepPath(self, proj, lang, is_new):
+        return self.getCCFXInputPath(proj, lang, is_new) + '.ccfxprepdir' + os.sep
+
+    def getCCFXOutputFileName(self, lang, is_new, is_tmp):
+        if is_new:
+            ext = '_new'
+        else:
+            ext = '_old'
+
+        if is_tmp:
+            ext = ext + '.ccfxd'
+        else:
+            ext = ext + '.txt'
+        return lang + ext
+
+    # the output of the ccfx prep scripts are a little funny,
+    def findPrepFileFor(self, path, name):
+        for f in os.listdir(path):
+            if f.startswith(name):
+                return f
+        raise Exception("Couldn't find prep file for diff with name: {0}".format(name))
+
