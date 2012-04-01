@@ -69,6 +69,8 @@ class PathBuilder:
         return lang + ext
 
     # the output of the ccfx prep scripts are a little funny,
+    # find the ccfx prep file in path (a directory) for file name (no path)
+    # ie self.findPrepFile('/home/user/myworkdir/more/.ccfxprepdir/', '0027.c')
     def findPrepFileFor(self, path, name):
         for f in os.listdir(path):
             if f.startswith(name):

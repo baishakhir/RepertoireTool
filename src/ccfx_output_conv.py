@@ -1,6 +1,6 @@
-import re
 import os
 from path_builder import PathBuilder
+from output_parser import RepertoireOutput
 
 class CCFXMetaData:
     # this is a little complex, so we're writing a nice comment about it
@@ -24,11 +24,9 @@ class CCFXMetaData:
         self.filterOutput = filter_output
 
 class CCFXMetaMapping:
-    name2meta = {}
-    idx2meta = {}
-
     def __init__(self):
-        pass
+        self.name2meta = {}
+        self.idx2meta = {}
 
     def addFile(self, meta):
         self.name2meta[meta.ccfxInput] = meta
@@ -42,8 +40,6 @@ class CCFXMetaMapping:
         return self.name2meta.values()
 
     def getMetaForIdx(self, file_idx):
-        if not file_idx in self.idx2meta:
-            print self.idx2meta
         return self.idx2meta[file_idx]
 
     def getMetaForPath(self, input_path):
@@ -51,18 +47,9 @@ class CCFXMetaMapping:
 
 
 class CCFXOutputConverter:
-
-    # find the ccfx prep file in path (a directory) for file name (no path)
-    # ie self.findPrepFile('/home/user/myworkdir/more/.ccfxprepdir/', '0027.c')
-    def findPrepFile(self, path, name):
-        files = os.listdir(path)
-        for f in files:
-            if f.startswith(name):
-                return f
-
     def buildMapping(self, pb, lang):
         for is_new in [True, False]:
-            self.buildMappingFor(pb, lang, is_new)
+            print self.buildMappingFor(pb, lang, is_new)
 
     def buildMappingFor(self, pb, lang, is_new):
         metaDB = CCFXMetaMapping()
@@ -102,55 +89,29 @@ class CCFXOutputConverter:
         # and then map those lines into lines in the original diff
         ccfx_out_path = pb.getCCFXOutputPath() + pb.getCCFXOutputFileName(
                 lang, is_new, is_tmp = False)
-        ccfx_out = open(ccfx_out_path, 'r')
-        reading_indices = False
-        reading_clones = False
-        rseparator = re.compile("[.-]")
+        ccfx_out = RepertoireOutput()
+        ccfx_out.loadFromFile(ccfx_out_path)
+
         clones = set()
-        for line in ccfx_out:
-            if line.startswith("source_files {"):
-                reading_indices = True
-                continue
-            elif line.startswith("clone_pairs {"):
-                reading_clones = True
-                continue
-            elif line.startswith("}"):
-                reading_indices = reading_clones = False
-            if not (reading_indices or reading_clones):
-                continue
 
-            if reading_indices:
-                idx,path,sz = line.split("\t")
-                metaDB.assocIdx(path, int(idx))
-            elif reading_clones:
-                idx,clone1,clone2 = line.split("\t")
-                # each clone looks like 1.56-78
-                # where 1 is the file index internally consistent
-                # 56-78 are the line numbers in the prep file
-                fidx1,start1,end1 = rseparator.split(clone1.strip())
-                fidx2,start2,end2 = rseparator.split(clone2.strip())
-                fidx1 = int(fidx1)
-                start1 = int(start1)
-                end1 = int(end1)
-                fidx2 = int(fidx2)
-                start2 = int(start2)
-                end2 = int(end2)
-                meta1 = metaDB.getMetaForIdx(fidx1)
-                meta2 = metaDB.getMetaForIdx(fidx2)
-                start1 = meta1.prepIdx2OrigIdx.get(start1, -1)
-                end1 = meta1.prepIdx2OrigIdx.get(end1, -1)
-                if end1 == -1:
-                    print meta1.prepIdx2OrigIdx
-                start2 = meta2.prepIdx2OrigIdx.get(start2, -1)
-                end2 = meta2.prepIdx2OrigIdx.get(end2, -1)
-                clone1 = (fidx1, start1, end1)
-                clone2 = (fidx2, start2, end2)
-                # remove duplicates by always placing the small file idx first
-                if clone1[0] < clone2[0]:
-                    clones.add((clone1, clone2))
-                else:
-                    clones.add((clone2, clone1))
-        print clones
+        for fileIdx, path in ccfx_out.getFileIter():
+            metaDB.assocIdx(path, int(fileIdx))
 
+        for cloneIdx, (clone1, clone2) in ccfx_out.getCloneIter():
+            fidx1, start1, end1 = clone1
+            fidx2, start2, end2 = clone2
+            meta1 = metaDB.getMetaForIdx(fidx1)
+            meta2 = metaDB.getMetaForIdx(fidx2)
+            start1 = meta1.prepIdx2OrigIdx.get(start1, -1)
+            end1 = meta1.prepIdx2OrigIdx.get(end1, -1)
+            start2 = meta2.prepIdx2OrigIdx.get(start2, -1)
+            end2 = meta2.prepIdx2OrigIdx.get(end2, -1)
+            clone1 = (fidx1, start1, end1)
+            clone2 = (fidx2, start2, end2)
+            if clone1[0] < clone2[0]:
+                clones.add((clone1, clone2))
+            else:
+                clones.add((clone2, clone1))
 
+        return clones
 
