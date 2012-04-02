@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>794</width>
-    <height>612</height>
+    <width>862</width>
+    <height>588</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,27 +17,27 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>40</y>
-     <width>381</width>
-     <height>531</height>
+     <y>30</y>
+     <width>401</width>
+     <height>511</height>
     </rect>
    </property>
   </widget>
   <widget class="QTextEdit" name="file2">
    <property name="geometry">
     <rect>
-     <x>410</x>
-     <y>40</y>
-     <width>371</width>
-     <height>531</height>
+     <x>430</x>
+     <y>30</y>
+     <width>411</width>
+     <height>511</height>
     </rect>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>580</y>
+     <x>380</x>
+     <y>550</y>
      <width>93</width>
      <height>27</height>
     </rect>
@@ -51,7 +51,7 @@
     <rect>
      <x>20</x>
      <y>10</y>
-     <width>381</width>
+     <width>401</width>
      <height>21</height>
     </rect>
    </property>
@@ -59,9 +59,9 @@
   <widget class="QTextEdit" name="file_name2">
    <property name="geometry">
     <rect>
-     <x>410</x>
+     <x>430</x>
      <y>10</y>
-     <width>361</width>
+     <width>411</width>
      <height>21</height>
     </rect>
    </property>

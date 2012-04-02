@@ -36,9 +36,9 @@ class RepOutput(QtGui.QMainWindow):
         indx2,cl2 = cl2.split(".")
         fname1 = self.fileList[int(indx1)-1]
         fname2 = self.fileList[int(indx2)-1]
-        clone1 = fname1 + "." + cl1
-        clone2 = fname2 + "." + cl2
-        args = "./display_diff.py " + fname1 + " " + fname2
+        clone1 = fname1 + "-" + cl1
+        clone2 = fname2 + "-" + cl2
+        args = "./display_diff.py " + clone1 + " " + clone2
         print args
         os.system(args)
 #        print clone1
@@ -58,6 +58,7 @@ class RepOutput(QtGui.QMainWindow):
 
     def process_clone(self):
         rep_output = RepertoireOutput()
+        print self.repOutputPath
         rep_output.loadFromFile(self.repOutputPath)
 
         for index, fileName in rep_output.getFileIter():
