@@ -22,6 +22,8 @@ class CCFXEntryPoint:
         conv_str = '{0} p {1} > {2}'.format(self.ccfxPath, tmp_out_path, out_path)
         print conv_str
         worked = worked and (0 == os.system(conv_str))
+        if not worked:
+            print "Couldn't call ccfx successfully"
         return worked
 
 
