@@ -20,6 +20,18 @@ class RepertoireModel:
         self.paths = {'proj0':path0, 'proj1':path1}
         return True
 
+    def setDiffPaths(self, path0 = None, path1 = None, isDirectory = True):
+        path0 = str(path0)
+        path1 = str(path1)
+        if (isDirectory is True) and (not os.path.isdir(path0) or
+            not os.path.isdir(path1)):
+            return False
+        elif (isDirectory is False) and (not os.path.isfile(path0) or
+            not os.path.isfile(path1)):
+            return False
+        self.paths = {'proj0':path0, 'proj1':path1}
+        return True
+
     def setTmpDirectory(self, path):
         path = str(path)
         if not os.path.isdir(path):
@@ -52,6 +64,18 @@ class RepertoireModel:
                 'cxx'  : DiffFilter(cSuff),
                 'hxx'  : DiffFilter(hSuff)
                 }
+
+    def setCcfxDirectory(self, path):
+        path = str(path)
+        if not os.path.isdir(path):
+            return False
+        # great, we have a scratch space, lets put our own directory there
+        # so we know we probably aren't going to fight someone else for names
+        uniq = 'repertoire_tmp_' + str(int(os.times()[4] * 100))
+        tmpPath = path + os.sep + uniq
+        os.mkdir(tmpPath)
+        self.tmpPath = tmpPath
+        return True
 
     def filterDiffs(self, interface):
         got_some = {'java':True, 'cxx':True, 'hxx':True}

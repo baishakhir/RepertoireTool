@@ -1,5 +1,6 @@
 GUI_FILES= \
 		ui/wizard.ui \
+		ui/wizard_generic.ui \
 		ui/rep_output.ui \
 		ui/file_display.ui
 
