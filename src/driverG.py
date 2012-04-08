@@ -44,6 +44,7 @@ class RepWizard(QtGui.QWizard):
         self.page(0).validatePage = self.validatePage0
         self.page(1).validatePage = self.validatePage1
         self.page(2).validatePage = self.validatePage2
+        self.page(3).validatePage = self.validatePage3
         self.page(4).validatePage = self.validatePage4
         self.page(5).validatePage = self.validatePage5
 #        self.page(5).isComplete   = self.page3Complete
@@ -54,8 +55,6 @@ class RepWizard(QtGui.QWizard):
             self.ui.directory1Line, 'Select diff directory 2'))
         self.ui.browseButton2.clicked.connect(lambda : self.pickDirectory(
             self.ui.tmpDirLine, 'Select temporary directory'))
-#        self.ui.browseButton_ccfx.clicked.connect(lambda : self.pickDirectory(
-#            self.ui.DirLine_ccfx, 'Select ccFinder directory') validateCCFinderSettings)
         self.ui.browseButton_ccfx.clicked.connect(lambda : self.setCCFinderPath())
 
         self.ui.errorLabel0.setVisible(False)
@@ -109,13 +108,21 @@ class RepWizard(QtGui.QWizard):
         self.model.setSuffixes(javaSuffix, cxxSuffix, hxxSuffix)
         return True
 
+    def validatePage3(self): #validating ccFinder input page
+        path = self.ui.DirLine_ccfx.text()
+        if self.model.setCcfxDirectory(path):
+            self.ui.errorLabel_ccfx.setVisible(False)
+            return True
+        self.ui.errorLabel_ccfx.setVisible(True)
+        return False
+
     def validatePage4(self):
         return True
 
     def validatePage5(self):
         return True
 
-    def setCCFinderPath(self): #validating ccFinder input page
+    def setCCFinderPath(self):
         self.pickDirectory(self.ui.DirLine_ccfx, 'Select ccFinder directory')
         path = self.ui.DirLine_ccfx.text()
         if self.model.setCcfxDirectory(path):
@@ -153,6 +160,17 @@ class RepWizard(QtGui.QWizard):
         self.ui.cSuffLine.setText(c)
         self.ui.hSuffLine.setText(h)
         self.ui.checkBox.setChecked(True)
+        self.ui.DirLine_ccfx.setText("/home/bray/RepertoireTool/ccFinder")
+
+    def setTestValues_files(self, file0, file1, tmp, j, c, h):
+        self.ui.directory0Line.setText(file0)
+        self.ui.directory1Line.setText(file1)
+        self.ui.tmpDirLine.setText(tmp)
+        self.ui.jSuffLine.setText(j)
+        self.ui.cSuffLine.setText(c)
+        self.ui.hSuffLine.setText(h)
+        self.ui.checkBox.setChecked(False)
+        self.ui.DirLine_ccfx.setText("/home/bray/RepertoireTool/ccFinder")
 
 
 if __name__ == "__main__":
@@ -167,10 +185,19 @@ if __name__ == "__main__":
                 '.c',
                 '.h'
                 )
-    if len(sys.argv) > 1 and 'braytest' == sys.argv[1]:
+    elif len(sys.argv) > 1 and 'braytest' == sys.argv[1]:
         myapp.setTestValues(
                 '/home/bray/RepertoireTool/data/unified_free',
                 '/home/bray/RepertoireTool/data/unified_net',
+                '/home/bray/RepertoireTool/src',
+                '.java',
+                '.c',
+                '.h'
+                )
+    elif len(sys.argv) > 1 and 'braytestfile' == sys.argv[1]:
+        myapp.setTestValues_files(
+                '/home/bray/RepertoireTool/data/unified_free/rgephy_free.c',
+                '/home/bray/RepertoireTool/data/unified_net/rgephy_net.c',
                 '/home/bray/RepertoireTool/src',
                 '.java',
                 '.c',
