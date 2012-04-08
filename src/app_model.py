@@ -13,7 +13,7 @@ class RepertoireModel:
         self.num_operations = 0
         self.operations_so_far = IntegerWrapper(0)
         self.ccfx = CCFXEntryPoint('../ccFinder/ccfx',40,True,True)
-        self.flags = {"No":False, "Yes":True}
+        self.flags = {"No":True, "Yes":False}
 
     def setDiffPaths(self, path0 = None, path1 = None):
         path0 = str(path0)
