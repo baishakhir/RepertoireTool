@@ -44,7 +44,6 @@ class RepWizard(QtGui.QWizard):
         self.page(0).validatePage = self.validatePage0
         self.page(1).validatePage = self.validatePage1
         self.page(2).validatePage = self.validatePage2
-        self.page(3).validatePage = self.validatePage3
         self.page(4).validatePage = self.validatePage4
         self.page(5).validatePage = self.validatePage5
 #        self.page(5).isComplete   = self.page3Complete
@@ -55,8 +54,9 @@ class RepWizard(QtGui.QWizard):
             self.ui.directory1Line, 'Select diff directory 2'))
         self.ui.browseButton2.clicked.connect(lambda : self.pickDirectory(
             self.ui.tmpDirLine, 'Select temporary directory'))
-        self.ui.browseButton_ccfx.clicked.connect(lambda : self.pickDirectory(
-            self.ui.DirLine_ccfx, 'Select ccFinder directory'))
+#        self.ui.browseButton_ccfx.clicked.connect(lambda : self.pickDirectory(
+#            self.ui.DirLine_ccfx, 'Select ccFinder directory') validateCCFinderSettings)
+        self.ui.browseButton_ccfx.clicked.connect(lambda : self.setCCFinderPath())
 
         self.ui.errorLabel0.setVisible(False)
         self.ui.errorLabel1.setVisible(False)
@@ -64,7 +64,7 @@ class RepWizard(QtGui.QWizard):
         self.ui.progressLabel.setText('')
 
     def initializePage(self, i):
-        # on page 3, we have a progress bar
+        # on page 4, we have a progress bar
         if i == 4:
             self.emit(QtCore.SIGNAL("processDiffs"), self.model)
         print('Going to page: ' + str(i))
@@ -109,19 +109,20 @@ class RepWizard(QtGui.QWizard):
         self.model.setSuffixes(javaSuffix, cxxSuffix, hxxSuffix)
         return True
 
-    def validatePage3(self): #validating ccFinder input page
+    def validatePage4(self):
+        return True
+
+    def validatePage5(self):
+        return True
+
+    def setCCFinderPath(self): #validating ccFinder input page
+        self.pickDirectory(self.ui.DirLine_ccfx, 'Select ccFinder directory')
         path = self.ui.DirLine_ccfx.text()
         if self.model.setCcfxDirectory(path):
             self.ui.errorLabel_ccfx.setVisible(False)
             return True
         self.ui.errorLabel_ccfx.setVisible(True)
         return False
-
-    def validatePage4(self):
-        return True
-
-    def validatePage5(self):
-        return True
 
     def updateProgress(self, args):
         msg, frac = args

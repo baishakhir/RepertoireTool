@@ -9,7 +9,7 @@ from path_builder import PathBuilder
 
 class RepertoireModel:
     def __init__(self):
-        pass
+        self.processDirectory = True
 
     def setDiffPaths(self, path0 = None, path1 = None):
         path0 = str(path0)
@@ -23,6 +23,7 @@ class RepertoireModel:
     def setDiffPaths(self, path0 = None, path1 = None, isDirectory = True):
         path0 = str(path0)
         path1 = str(path1)
+        self.processDirectory = isDirectory
         if (isDirectory is True) and (not os.path.isdir(path0) or
             not os.path.isdir(path1)):
             return False
@@ -69,13 +70,12 @@ class RepertoireModel:
         path = str(path)
         if not os.path.isdir(path):
             return False
-        # great, we have a scratch space, lets put our own directory there
-        # so we know we probably aren't going to fight someone else for names
-        uniq = 'repertoire_tmp_' + str(int(os.times()[4] * 100))
-        tmpPath = path + os.sep + uniq
-        os.mkdir(tmpPath)
-        self.tmpPath = tmpPath
-        return True
+        ccfx_binary = path + "/ccfx"
+        print "ccFinder Path : " + ccfx_binary
+        if os.path.exists(ccfx_binary):
+            self.ccfxPath = ccfx_binary
+            return True
+        return False
 
     def filterDiffs(self, interface):
         got_some = {'java':True, 'cxx':True, 'hxx':True}
@@ -108,6 +108,7 @@ class RepertoireModel:
                     if not ok:
                         return ('Error processing: ' + file_name, False)
                     operations_so_far.incr()
+
 
         # Second, change each diff into ccFinder input format
         converter = CCFXInputConverter()
