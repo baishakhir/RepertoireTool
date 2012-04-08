@@ -56,6 +56,9 @@ class RepWizard(QtGui.QWizard):
         self.ui.browseButton2.clicked.connect(lambda : self.pickDirectory(
             self.ui.tmpDirLine, 'Select temporary directory'))
         self.ui.browseButton_ccfx.clicked.connect(lambda : self.setCCFinderPath())
+        self.ui.comboBox_token.activated[str].connect(self.onActivated_token)
+        self.ui.comboBox_file.activated[str].connect(self.onActivated_file)
+        self.ui.comboBox_group.activated[str].connect(self.onActivated_group)
 
         self.ui.errorLabel0.setVisible(False)
         self.ui.errorLabel1.setVisible(False)
@@ -110,11 +113,14 @@ class RepWizard(QtGui.QWizard):
 
     def validatePage3(self): #validating ccFinder input page
         path = self.ui.DirLine_ccfx.text()
-        if self.model.setCcfxDirectory(path):
-            self.ui.errorLabel_ccfx.setVisible(False)
-            return True
-        self.ui.errorLabel_ccfx.setVisible(True)
-        return False
+        if self.model.setCcfxDirectory(path) is False:
+            self.ui.errorLabel_ccfx.setVisible(True)
+            return False
+        self.ui.errorLabel_ccfx.setVisible(False)
+        self.model.setCcfxToken(self.ui.comboBox_token.currentText())
+        self.model.setCcfxFileSeparator(self.ui.comboBox_file.currentText())
+        self.model.setCcfxGroupSeparator(self.ui.comboBox_group.currentText())
+        return True
 
     def validatePage4(self):
         return True
@@ -130,6 +136,15 @@ class RepWizard(QtGui.QWizard):
             return True
         self.ui.errorLabel_ccfx.setVisible(True)
         return False
+
+    def onActivated_token(self):
+        self.model.setCcfxToken(self.ui.comboBox_token.currentText())
+
+    def onActivated_file(self):
+        self.model.setCcfxFileSeparator(self.ui.comboBox_file.currentText())
+
+    def onActivated_group(self):
+        self.model.setCcfxGroupSeparator(self.ui.comboBox_group.currentText())
 
     def updateProgress(self, args):
         msg, frac = args

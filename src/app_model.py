@@ -13,6 +13,10 @@ class RepertoireModel:
         self.num_operations = 0
         self.operations_so_far = IntegerWrapper(0)
         self.ccfxPath = '../ccFinder/ccfx'
+        self.ccfxTokenSize = 40
+        self.ccfxFileSep = True
+        self.ccfxGrpSep = True
+        self.flags = {"No":False, "Yes":True}
 
     def setDiffPaths(self, path0 = None, path1 = None):
         path0 = str(path0)
@@ -79,6 +83,24 @@ class RepertoireModel:
             self.ccfxPath = ccfx_binary
             return True
         return False
+
+    def setCcfxToken(self, token_size):
+        print "setting ccFinder token size = " + token_size
+        self.ccfxTokenSize = token_size
+        return True
+
+    def setCcfxFileSeparator(self, flag):
+        print "setting ccFinder file separator flag = " + flag
+        self.ccfxFileSep = self.flags[str(flag)]
+        print self.ccfxFileSep
+        return True
+
+    def setCcfxGroupSeparator(self, flag):
+        print "setting ccFinder group separator flag = " + flag
+        self.ccfxGrpSep = self.flags[str(flag)]
+        print self.ccfxGrpSep
+        return True
+
 
     def filterDiffProjs(self, interface):
         # 3 different file formats, 2 operations each (filter/convert)
@@ -174,7 +196,7 @@ class RepertoireModel:
         clone_path = self.pb.getCCFXOutputPath()
         # Third, call ccfx for each directory
 #        ccfx = CCFXEntryPoint('../ccFinder/ccfx')
-        ccfx = CCFXEntryPoint(self.ccfxPath)
+        ccfx = CCFXEntryPoint(self.ccfxPath,self.ccfxTokenSize,self.ccfxFileSep,self.ccfxGrpSep)
         worked = True
         for lang in ['java', 'cxx', 'hxx']:
             if not self.got_some[lang]:

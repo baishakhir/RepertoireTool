@@ -1,21 +1,34 @@
 import os
 
 class CCFXEntryPoint:
-    def __init__(self, ccfx_path = './ccfx', context_sz = 40):
-        self.contextSize = context_sz
+    def __init__(self, ccfx_path = './ccfx', token_sz = 40, file_sep = True, grp_sep = True):
         self.ccfxPath = ccfx_path
+        self.tokenSize = token_sz
+        self.fileSep = file_sep
+        self.grpSep = grp_sep
 
     def processPair(self, dir0, dir1, tmp_out_path, out_path, lang = 'java'):
         worked = True
         if lang != 'java':
             lang = 'cpp'
+        option = "-w "
+        if self.fileSep is True: #no intra-file clone
+            option += "f-"
+        else:
+            option += "f+"
+        if self.grpSep: #no intra-group clone
+            option += "w-g+"
+        else:
+            option += "w+"
+
         cmd_str = (
-            '{0} d {1} -v -dn {2}  -is -dn {3} -w f-w-g+ -b {4} -o {5}'.format(
+            '{0} d {1} -v -dn {2}  -is -dn {3} {4} -b {5} -o {6}'.format(
                 self.ccfxPath,
                 lang,
                 dir0,
                 dir1,
-                self.contextSize,
+                option,
+                self.tokenSize,
                 tmp_out_path))
         print cmd_str
         worked = 0 == os.system(cmd_str)
