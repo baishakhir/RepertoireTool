@@ -120,7 +120,8 @@ class RepertoireModel:
 
         clone_path = pb.getCCFXOutputPath()
         # Third, call ccfx for each directory
-        ccfx = CCFXEntryPoint('../ccFinder/ccfx')
+#        ccfx = CCFXEntryPoint('../ccFinder/ccfx')
+        ccfx = CCFXEntryPoint(self.ccfxPath)
         worked = True
         for lang in ['java', 'cxx', 'hxx']:
             if not got_some[lang]:
