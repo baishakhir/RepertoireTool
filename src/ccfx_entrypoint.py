@@ -11,25 +11,30 @@ class CCFXEntryPoint:
         worked = True
         if lang != 'java':
             lang = 'cpp'
+
         option = "-w "
+        option_sep = ""
         if self.fileSep is True: #no intra-file clone
             option += "f-"
         else:
             option += "f+"
         if self.grpSep: #no intra-group clone
             option += "w-g+"
+            option_sep = "-is"
         else:
             option += "w+"
 
         cmd_str = (
-            '{0} d {1} -v -dn {2}  -is -dn {3} {4} -b {5} -o {6}'.format(
+            '{0} d {1} -v -dn {2} {3} -dn {4} {5} -b {6} -o {7}'.format(
                 self.ccfxPath,
                 lang,
                 dir0,
+                option_sep,
                 dir1,
                 option,
                 self.tokenSize,
                 tmp_out_path))
+
         print cmd_str
         worked = 0 == os.system(cmd_str)
         conv_str = '{0} p {1} > {2}'.format(self.ccfxPath, tmp_out_path, out_path)

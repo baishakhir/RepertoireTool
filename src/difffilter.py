@@ -5,6 +5,7 @@ class DiffFilter:
         self.fileEnding = '.' + extension + os.linesep
 
     def filterDiff(self, inpath, outpath):
+        print "filterDiff: inpath = %s, outpath = %s" % (inpath, outpath)
         gotsome = False
         oneago=''
         valid=False

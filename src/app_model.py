@@ -12,10 +12,7 @@ class RepertoireModel:
         self.processDirectory = True
         self.num_operations = 0
         self.operations_so_far = IntegerWrapper(0)
-        self.ccfxPath = '../ccFinder/ccfx'
-        self.ccfxTokenSize = 40
-        self.ccfxFileSep = True
-        self.ccfxGrpSep = True
+        self.ccfx = CCFXEntryPoint('../ccFinder/ccfx',40,True,True)
         self.flags = {"No":False, "Yes":True}
 
     def setDiffPaths(self, path0 = None, path1 = None):
@@ -30,7 +27,7 @@ class RepertoireModel:
     def setDiffPaths(self, path0 = None, path1 = None, isDirectory = True):
         path0 = str(path0)
         path1 = str(path1)
-        self.processDirectory = isDirectory
+        self.ccfx.isDirectory = self.processDirectory = isDirectory
         if (isDirectory is True) and (not os.path.isdir(path0) or
             not os.path.isdir(path1)):
             return False
@@ -80,25 +77,25 @@ class RepertoireModel:
         ccfx_binary = path + "/ccfx"
         print "ccFinder Path : " + ccfx_binary
         if os.path.exists(ccfx_binary):
-            self.ccfxPath = ccfx_binary
+            self.ccfx.ccfxPath = ccfx_binary
             return True
         return False
 
     def setCcfxToken(self, token_size):
         print "setting ccFinder token size = " + token_size
-        self.ccfxTokenSize = token_size
+        self.ccfx.tokenSize = token_size
         return True
 
     def setCcfxFileSeparator(self, flag):
         print "setting ccFinder file separator flag = " + flag
-        self.ccfxFileSep = self.flags[str(flag)]
-        print self.ccfxFileSep
+        self.ccfx.fileSep = self.flags[str(flag)]
+        print self.ccfx.fileSep
         return True
 
     def setCcfxGroupSeparator(self, flag):
         print "setting ccFinder group separator flag = " + flag
-        self.ccfxGrpSep = self.flags[str(flag)]
-        print self.ccfxGrpSep
+        self.ccfx.grpSep = self.flags[str(flag)]
+        print self.ccfx.grpSep
         return True
 
 
@@ -140,36 +137,31 @@ class RepertoireModel:
         lang2 = os.path.splitext(input_file2)[1] #extension
 
         print "file1 = %s, file2 = %s" % (input_file1 , input_file2)
-        if lang1 is not lang2 :
+        if lang1 != lang2 :
             print "!!the two files have different extension"
+            print "lang1 = " + lang1
+            print "lang2 = " + lang2
             return False
-
-        lang = ""
-        if lang1.startswith(".c"):
-            lang = "cxx"
-        elif lang1.startswith(".h"):
-            lang = "hxx"
-        elif lang1.startswith("java"):
-            lang = "java"
 
         i = 0
         for proj in ['proj0', 'proj1']:
-            the_filter = self.filters[lang]
-            if interface.cancelled():
-                return ('User cancelled processing', False)
-            interface.progress('Filtering {0} files'.format(lang),
-                    self.operations_so_far.value / float(self.num_operations))
-            input_path = self.paths[proj]
-            out_path = (self.pb.getFilterOutputPath(proj, lang) +
-                    ('%04d' % i) + '.' + self.suffixes[lang])
-            (ok, gotsome) = the_filter.filterDiff(input_path, out_path)
-            # this is actually tricky, if we got some output for java
-            # in one project but not the other, then we know that
-            # there can't be any clones
-            self.got_some[lang] = self.got_some[lang] and gotsome
-            if not ok:
-                return ('Error processing: ' + file_name, False)
-            self.operations_so_far.incr()
+            for lang in ['java', 'cxx', 'hxx']:
+                the_filter = self.filters[lang]
+                if interface.cancelled():
+                    return ('User cancelled processing', False)
+                interface.progress('Filtering {0} files'.format(lang),
+                        self.operations_so_far.value / float(self.num_operations))
+                input_path = self.paths[proj]
+                out_path = (self.pb.getFilterOutputPath(proj, lang) +
+                        ('%04d' % i) + '.' + self.suffixes[lang])
+                (ok, gotsome) = the_filter.filterDiff(input_path, out_path)
+                # this is actually tricky, if we got some output for java
+                # in one project but not the other, then we know that
+                # there can't be any clones
+                self.got_some[lang] = self.got_some[lang] and gotsome
+                if not ok:
+                    return ('Error processing: ' + file_name, False)
+                self.operations_so_far.incr()
 
 
     def filterDiffs(self, interface):
@@ -196,7 +188,7 @@ class RepertoireModel:
         clone_path = self.pb.getCCFXOutputPath()
         # Third, call ccfx for each directory
 #        ccfx = CCFXEntryPoint('../ccFinder/ccfx')
-        ccfx = CCFXEntryPoint(self.ccfxPath,self.ccfxTokenSize,self.ccfxFileSep,self.ccfxGrpSep)
+#        ccfx = CCFXEntryPoint(self.ccfxPath,self.ccfxTokenSize,self.ccfxFileSep,self.ccfxGrpSep)
         worked = True
         for lang in ['java', 'cxx', 'hxx']:
             if not self.got_some[lang]:
@@ -213,9 +205,9 @@ class RepertoireModel:
                     lang, is_new = False, is_tmp = False)
             new_out = clone_path + self.pb.getCCFXOutputFileName(
                     lang, is_new = True, is_tmp = False)
-            worked = worked and ccfx.processPair(
+            worked = worked and self.ccfx.processPair(
                     old_path0, old_path1, tmp_old_out, old_out, lang)
-            worked = worked and ccfx.processPair(
+            worked = worked and self.ccfx.processPair(
                     new_path0, new_path1, tmp_new_out, new_out, lang)
         if not worked:
             return ('ccFinderX execution failed', False)
