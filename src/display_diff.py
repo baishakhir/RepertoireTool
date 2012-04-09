@@ -4,6 +4,7 @@ import re
 from PyQt4 import QtCore, QtGui
 from ui.file_display import Ui_Repertoire
 from os.path import isfile
+import config
 
 class RepDisplay(QtGui.QMainWindow):
     def __init__(self, clone1, clone2, parent=None):
@@ -33,11 +34,23 @@ class RepDisplay(QtGui.QMainWindow):
         textfont = QtGui.QFont("courier:bold",8)
         textBox.setFont(textfont)
 
+        start = int(start) - 1 #as enumerate starts from 0
+        end = int(end) - 1     #as enumerate starts from 0
+
+        start_display = start - config.DISPLAY_CONTEXT
+        end_display = end + config.DISPLAY_CONTEXT
+
         if isfile(filePath):
             lineno = 0
-            for line in open(filePath,"r"):
-                lineno += 1
-                if (lineno >= int(start) and lineno <= int(end)):
+
+            fileHandle = open(filePath,"r")
+            lineList = fileHandle.readlines()
+            fileHandle.close()
+
+            for lineno,line in enumerate(lineList):
+                if (lineno < start_display or lineno > end_display):
+                    continue
+                if (lineno >= start and lineno <= end):
                     textcolor = QtGui.QColor("red")
                 else:
                     textcolor = QtGui.QColor("black")
