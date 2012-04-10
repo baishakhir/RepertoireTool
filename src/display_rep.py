@@ -33,11 +33,13 @@ class RepOutput(QtGui.QMainWindow):
 #        print clone
         cl1,cl2 = clone.split("\t")
         indx1,cl1 = cl1.split(".")
+        start1,end1 = cl1.split("-")
         indx2,cl2 = cl2.split(".")
+        start2,end2 = cl2.split("-")
         fname1 = self.fileList[int(indx1)-1]
         fname2 = self.fileList[int(indx2)-1]
-        clone1 = fname1 + "-" + cl1
-        clone2 = fname2 + "-" + cl2
+        clone1 = fname1 + ":" + start1 + ":" + end1
+        clone2 = fname2 + ":" + start2 + ":" + end2
         args = "./display_diff.py " + clone1 + " " + clone2
         print args
         os.system(args)

@@ -17,8 +17,9 @@ class RepDisplay(QtGui.QMainWindow):
         self.postSetup()
 
     def display(self):
-        filePath1,start1,end1 = self.clone1.split("-")
-        filePath2,start2,end2 = self.clone2.split("-")
+        print clone1
+        filePath1,start1,end1 = self.clone1.split(":")
+        filePath2,start2,end2 = self.clone2.split(":")
         self.ui.file_name1.setText(filePath1)
         self.ui.file_name2.setText(filePath2)
 
@@ -54,7 +55,7 @@ class RepDisplay(QtGui.QMainWindow):
                     textcolor = QtGui.QColor("red")
                 else:
                     textcolor = QtGui.QColor("black")
-                if lineno is int(start):
+                if lineno is start:
                     textBox.setFocus()
                 textBox.setTextColor(textcolor)
                 line = line.rstrip("\n")
