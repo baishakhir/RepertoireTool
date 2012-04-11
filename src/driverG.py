@@ -211,8 +211,10 @@ if __name__ == "__main__":
                 )
     elif len(sys.argv) > 1 and 'braytestfile' == sys.argv[1]:
         myapp.setTestValues_files(
-                '/home/bray/RepertoireTool/data/unified_free/rgephy_free.c',
-                '/home/bray/RepertoireTool/data/unified_net/rgephy_net.c',
+#                '/home/bray/RepertoireTool/data/unified_free/rgephy_free.c',
+#                '/home/bray/RepertoireTool/data/unified_net/rgephy_net.c',
+                '/home/bray/RepertoireTool/src/diffs/diff_R3_0_1__R3_0_2',
+                '/home/bray/RepertoireTool/src/diffs/diff_R3_0__R3_0_1',
                 '/home/bray/RepertoireTool/src',
                 '.java',
                 '.c',

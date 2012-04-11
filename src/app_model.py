@@ -75,27 +75,24 @@ class RepertoireModel:
         if not os.path.isdir(path):
             return False
         ccfx_binary = path + "/ccfx"
-        print "ccFinder Path : " + ccfx_binary
         if os.path.exists(ccfx_binary):
             self.ccfx.ccfxPath = ccfx_binary
             return True
         return False
 
     def setCcfxToken(self, token_size):
-        print "setting ccFinder token size = " + token_size
         self.ccfx.tokenSize = token_size
+        print "setting ccFinder token size = " + token_size
         return True
 
     def setCcfxFileSeparator(self, flag):
-        print "setting ccFinder file separator flag = " + flag
         self.ccfx.fileSep = self.flags[str(flag)]
-        print self.ccfx.fileSep
+        print "setting ccFinder file separator flag to %d" % (self.ccfx.fileSep)
         return True
 
     def setCcfxGroupSeparator(self, flag):
-        print "setting ccFinder group separator flag = " + flag
         self.ccfx.grpSep = self.flags[str(flag)]
-        print self.ccfx.grpSep
+        print "setting ccFinder group separator flag to %d" % (self.ccfx.grpSep)
         return True
 
 
@@ -136,7 +133,6 @@ class RepertoireModel:
         lang1 = os.path.splitext(input_file1)[1] #extension
         lang2 = os.path.splitext(input_file2)[1] #extension
 
-        print "file1 = %s, file2 = %s" % (input_file1 , input_file2)
         if lang1 != lang2 :
             print "!!the two files have different extension"
             print "lang1 = " + lang1

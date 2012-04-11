@@ -5,7 +5,7 @@ class DiffFilter:
         self.fileEnding = '.' + extension + os.linesep
 
     def filterDiff(self, inpath, outpath):
-        print "filterDiff: inpath = %s, outpath = %s" % (inpath, outpath)
+        print ">>>>>> filterDiff: inpath = %s, outpath = %s\n" % (inpath, outpath)
         gotsome = False
         oneago=''
         valid=False
@@ -18,7 +18,7 @@ class DiffFilter:
             outf = open(outpath, 'w')
 
             for currline in inf:
-                if currline == sentinel and oneago.startswith('Index: '):
+                if (currline == sentinel and oneago.startswith('Index: ')) or oneago.startswith('diff --git'):
                     # we're at the start of a new diff section
                     if oneago.endswith(self.fileEnding):
                         # oneago is the index line
