@@ -2,6 +2,8 @@ import os
 from path_builder import PathBuilder
 from output_parser import RepertoireOutput
 
+import config 
+
 class CCFXMetaData:
     # this is a little complex, so we're writing a nice comment about it
     # 1. we start with big aggregate diff files between versions
@@ -57,14 +59,28 @@ def convert_ccfx_output(pb, lang, is_new):
 
     # we have our files, now map line numbers in the prep files to input files
     for meta in metaDB.getMetas():
-        prep = open(meta.ccfxPrep, 'r')
-        conv = open(meta.filterConv, 'r')
+
+        if config.DEBUG is True:
+            print "prep file = " + meta.ccfxPrep
+            print "conv file = " + meta.filterConv
+
+        prepHandler = open(meta.ccfxPrep, 'r')
+        prep = prepHandler.readlines()
+        prepHandler.close()
+        
+        convHandler = open(meta.filterConv, 'r')
+        conv = convHandler.readlines()
+        convHandler.close()
+
         input2orig = {}
         pidx2orig = {}
         # build a map of line numbers in ccfx_input to filtered diff line
         for i, cline in enumerate(conv):
             if i < 2:
                 continue
+            if  cline.rstrip().startswith('"'): #filename-->skip the line
+                continue
+
             dstIdx,srcIdx,op,changId = cline.split(',')
             input2orig[int(dstIdx)] = int(srcIdx)
         for pidx, pline in enumerate(prep):

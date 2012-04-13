@@ -47,7 +47,7 @@ class RepWizard(QtGui.QWizard):
         self.page(3).validatePage = self.validatePage3
         self.page(4).validatePage = self.validatePage4
         self.page(5).validatePage = self.validatePage5
-#        self.page(5).isComplete   = self.page3Complete
+        self.page(5).isComplete   = self.page5Complete
 
         self.ui.browseButton0.clicked.connect(lambda : self.pickPath(
             self.ui.directory0Line, 'Select diff directory 1'))
@@ -150,7 +150,7 @@ class RepWizard(QtGui.QWizard):
         msg, frac = args
         self.ui.progressBar.setValue(int(frac * 100))
         self.ui.progressLabel.setText(msg)
-        print('called progress ' + str(frac))
+#       print('called progress ' + str(frac))
 
     def workerDone(self, args):
         msg, success = args
@@ -164,7 +164,7 @@ class RepWizard(QtGui.QWizard):
             msgBox.exec_()
         self.page(3).emit(QtCore.SIGNAL("completeChanged()"))
 
-    def page3Complete(self):
+    def page5Complete(self):
         return self.processingDone
 
     def setTestValues(self, proj0, proj1, tmp, j, c, h):
@@ -175,9 +175,20 @@ class RepWizard(QtGui.QWizard):
         self.ui.cSuffLine.setText(c)
         self.ui.hSuffLine.setText(h)
         self.ui.checkBox.setChecked(True)
-        self.ui.DirLine_ccfx.setText("/home/bray/RepertoireTool/ccFinder")
 
-    def setTestValues_files(self, file0, file1, tmp, j, c, h):
+
+    def setTestValues(self, proj0, proj1, tmp, j, c, h,ccfx_path):
+        self.ui.directory0Line.setText(proj0)
+        self.ui.directory1Line.setText(proj1)
+        self.ui.tmpDirLine.setText(tmp)
+        self.ui.jSuffLine.setText(j)
+        self.ui.cSuffLine.setText(c)
+        self.ui.hSuffLine.setText(h)
+        self.ui.checkBox.setChecked(True)
+        self.ui.DirLine_ccfx.setText(ccfx_path)
+#        self.ui.DirLine_ccfx.setText("/home/bray/RepertoireTool/ccFinder")
+
+    def setTestValues_files(self, file0, file1, tmp, j, c, h,ccfx_path):
         self.ui.directory0Line.setText(file0)
         self.ui.directory1Line.setText(file1)
         self.ui.tmpDirLine.setText(tmp)
@@ -185,7 +196,11 @@ class RepWizard(QtGui.QWizard):
         self.ui.cSuffLine.setText(c)
         self.ui.hSuffLine.setText(h)
         self.ui.checkBox.setChecked(False)
-        self.ui.DirLine_ccfx.setText("/home/bray/RepertoireTool/ccFinder")
+        self.ui.DirLine_ccfx.setText(ccfx_path)
+        self.ui.comboBox_group.setCurrentIndex(0)
+        self.ui.comboBox_file.setCurrentIndex(0)
+
+ #       self.ui.DirLine_ccfx.setText("/home/bray/RepertoireTool/ccFinder")
 
 
 if __name__ == "__main__":
@@ -202,23 +217,25 @@ if __name__ == "__main__":
                 )
     elif len(sys.argv) > 1 and 'braytest' == sys.argv[1]:
         myapp.setTestValues(
-                '/home/bray/RepertoireTool/data/unified_free',
-                '/home/bray/RepertoireTool/data/unified_net',
-                '/home/bray/RepertoireTool/src',
+                '/home/bray/myTool/RepertoireTool/data/unified_free',
+                '/home/bray/myTool/RepertoireTool/data/unified_net',
+                '/home/bray/myTool/RepertoireTool/src',
                 '.java',
                 '.c',
-                '.h'
+                '.h',
+                '/home/bray/myTool/RepertoireTool/ccFinder'
                 )
     elif len(sys.argv) > 1 and 'braytestfile' == sys.argv[1]:
         myapp.setTestValues_files(
 #                '/home/bray/RepertoireTool/data/unified_free/rgephy_free.c',
 #                '/home/bray/RepertoireTool/data/unified_net/rgephy_net.c',
-                '/home/bray/RepertoireTool/src/diffs/diff_R3_0_1__R3_0_2',
-                '/home/bray/RepertoireTool/src/diffs/diff_R3_0__R3_0_1',
-                '/home/bray/RepertoireTool/src',
+                '/home/bray/myTool/RepertoireTool/src/diffs/diff_R3_6__R3_6_1',
+                '/home/bray/myTool/RepertoireTool/src/diffs/diff_R3_6_1__R3_6_2',
+                '/home/bray/myTool/RepertoireTool/src',
                 '.java',
-                '.c',
-                '.h'
+                '.cpp',
+                '.h',
+                "/home/bray/myTool/RepertoireTool/ccFinder"
                 )
     myapp.show()
     sys.exit(app.exec_())

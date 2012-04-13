@@ -1,4 +1,6 @@
+import config
 import os
+from subprocess import Popen, PIPE
 
 class CCFXEntryPoint:
     def __init__(self, ccfx_path = './ccfx', token_sz = 40, file_sep = True, grp_sep = True):
@@ -25,7 +27,7 @@ class CCFXEntryPoint:
             option += "w+"
 
         cmd_str = (
-            '{0} d {1} -v -dn {2} {3} -dn {4} {5} -b {6} -o {7}'.format(
+            '{0} d {1} -dn {2} {3} -dn {4} {5} -b {6} -o {7}'.format(
                 self.ccfxPath,
                 lang,
                 dir0,
@@ -35,13 +37,36 @@ class CCFXEntryPoint:
                 self.tokenSize,
                 tmp_out_path))
 
-        print cmd_str
-        worked = 0 == os.system(cmd_str)
+        print "CCFX: generating " + os.path.basename(tmp_out_path)
+        if config.DEBUG is True:
+            print cmd_str
+
+#        worked = 0 == os.system(cmd_str)
+        proc = Popen(cmd_str,shell=True,stdout=PIPE,stderr=PIPE)
+        proc.wait()
+        if proc.returncode != 0:
+            print "Couldn't run %s successfully" % (cmd_str)
+            print "error code = " + str(proc.returncode)
+            return False
+        else:
+            print "Success!!"
+
         conv_str = '{0} p {1} > {2}'.format(self.ccfxPath, tmp_out_path, out_path)
-        print conv_str
-        worked = worked and (0 == os.system(conv_str))
-        if not worked:
-            print "Couldn't call ccfx successfully"
+
+        print "CCFX: generating " + os.path.basename(out_path)
+        if config.DEBUG is True:
+            print conv_str
+#        worked = worked and (0 == os.system(conv_str))
+        proc = Popen(conv_str,shell=True,stdout=PIPE,stderr=PIPE)
+        proc.wait()
+        if proc.returncode != 0:
+            print "Couldn't run %s successfully" % (cmd_str)
+            print "error code = " + str(proc.returncode)
+            return False
+        else:
+            print "Success!!"
+
+
         return worked
 
 

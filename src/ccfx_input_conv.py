@@ -89,14 +89,11 @@ class CCFXInputConverter:
                     inf = open(input_path + input_file, 'r')
                     self.oldCodeFile = open(old_cc_path + input_file, 'w')
                     self.newCodeFile = open(new_cc_path + input_file, 'w')
-                    self.oldConvWriter = csv.writer(
-                            open(old_conv_path +
-                                path_builder.makeLineMapFileName(input_file), 'w'),
-                            delimiter=',')
-                    self.newConvWriter = csv.writer(
-                            open(new_conv_path +
-                                path_builder.makeLineMapFileName(input_file), 'w'),
-                            delimiter=',')
+                    oldConv = open(old_conv_path +
+                                path_builder.makeLineMapFileName(input_file), 'w')
+                    self.oldConvWriter = csv.writer(oldConv,delimiter=',')
+                    newConv = open(new_conv_path + path_builder.makeLineMapFileName(input_file), 'w')
+                    self.newConvWriter = csv.writer(newConv,delimiter=',')
                     self.oldConvWriter.writerow(
                             ['Target Line Number',
                             'Original Line Number',
@@ -155,6 +152,8 @@ class CCFXInputConverter:
                     inf.close()
                     self.oldCodeFile.close()
                     self.newCodeFile.close()
+                    oldConv.close()
+                    newConv.close()
                     if not reportProgress is None:
                         reportProgress()
 

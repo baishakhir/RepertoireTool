@@ -97,9 +97,10 @@ class RepertoireModel:
 
 
     def filterDiffProjs(self, interface):
-        # 3 different file formats, 2 operations each (filter/convert)
+      # 3 different file formats, 2 operations each (filter/convert) 
         self.num_operations = len(os.listdir(self.paths['proj0'])) * 3 * 2
         self.num_operations += len(os.listdir(self.paths['proj1'])) * 3 * 2
+        self.num_operations += 2*6 #2 ccFinder call for all 6 output files
         self.operations_so_far = IntegerWrapper(0)
 
         for proj in ['proj0', 'proj1']:
@@ -180,14 +181,18 @@ class RepertoireModel:
                 self.operations_so_far.incr() / float(self.num_operations))
         converter.convert(self.pb, callback)
 
+        #new and old for 3 langs
+        self.num_operations = 3 * 2 
+        self.operations_so_far = IntegerWrapper(0)
+        
 
         clone_path = self.pb.getCCFXOutputPath()
         # Third, call ccfx for each directory
-#        ccfx = CCFXEntryPoint('../ccFinder/ccfx')
-#        ccfx = CCFXEntryPoint(self.ccfxPath,self.ccfxTokenSize,self.ccfxFileSep,self.ccfxGrpSep)
         worked = True
         for lang in ['java', 'cxx', 'hxx']:
             if not self.got_some[lang]:
+                interface.progress('ccFinderX executing',
+                                   self.operations_so_far.incr() / float(self.num_operations))
                 continue
             old_path0 = self.pb.getCCFXInputPath(PathBuilder.PROJ0, lang, False)
             old_path1 = self.pb.getCCFXInputPath(PathBuilder.PROJ1, lang, False)
@@ -203,15 +208,25 @@ class RepertoireModel:
                     lang, is_new = True, is_tmp = False)
             worked = worked and self.ccfx.processPair(
                     old_path0, old_path1, tmp_old_out, old_out, lang)
+            interface.progress('ccFinderX executing',
+                self.operations_so_far.incr() / float(self.num_operations))
             worked = worked and self.ccfx.processPair(
                     new_path0, new_path1, tmp_new_out, new_out, lang)
+            interface.progress('ccFinderX executing',
+                self.operations_so_far.incr() / float(self.num_operations))
         if not worked:
             return ('ccFinderX execution failed', False)
-
-        # Fourth, build up our database of clones
+       
+         # Fourth, build up our database of clones 
+        print "Repertoire filtering...."
+        #new and old for 3 langs
+        self.num_operations = 3 * 2 
+        self.operations_so_far = IntegerWrapper(0)
 
         for lang in ['java', 'cxx', 'hxx']:
             if not self.got_some[lang]:
+                interface.progress('Repertoire filtering based on operation',
+                                   self.operations_so_far.incr() / float(self.num_operations))
                 continue
             for is_new in [True, False]:
                 output = convert_ccfx_output(self.pb, lang, is_new)
@@ -220,7 +235,11 @@ class RepertoireModel:
                 if is_new:
                     suffix = '_new.txt'
                 output.writeToFile(rep_out_path + lang + suffix)
+                interface.progress('Repertoire filtering based on operation',
+                                   self.operations_so_far.incr() / float(self.num_operations))
+                
 
+        print "Processing successful!!"
         return ('Processing successful', True)
 
 
