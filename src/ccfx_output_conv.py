@@ -2,7 +2,7 @@ import os
 from path_builder import PathBuilder
 from output_parser import RepertoireOutput
 
-import config 
+import config
 
 class CCFXMetaData:
     # this is a little complex, so we're writing a nice comment about it
@@ -67,13 +67,14 @@ def convert_ccfx_output(pb, lang, is_new):
         prepHandler = open(meta.ccfxPrep, 'r')
         prep = prepHandler.readlines()
         prepHandler.close()
-        
+
         convHandler = open(meta.filterConv, 'r')
         conv = convHandler.readlines()
         convHandler.close()
 
         input2orig = {}
         pidx2orig = {}
+        origline2op = {}
         # build a map of line numbers in ccfx_input to filtered diff line
         for i, cline in enumerate(conv):
             if i < 2:
@@ -83,11 +84,13 @@ def convert_ccfx_output(pb, lang, is_new):
 
             dstIdx,srcIdx,op,changId = cline.split(',')
             input2orig[int(dstIdx)] = int(srcIdx)
+            origline2op[int(srcIdx)] = op
         for pidx, pline in enumerate(prep):
             inputIdx = int(pline.partition(".")[0], 16)
             # ccfx numbers from 1, but pidx is from 0
             pidx2orig[pidx + 1] = input2orig.get(inputIdx, -1)
         meta.prepIdx2OrigIdx = pidx2orig
+        meta.line2op = origline2op
 
     ccfx_out_path = pb.getCCFXOutputPath() + pb.getCCFXOutputFileName(
             lang, is_new, is_tmp = False)
@@ -104,17 +107,26 @@ def convert_ccfx_output(pb, lang, is_new):
         files[fileIdx] = meta.filterOutput
 
     clones = {}
+
     for cloneIdx, (clone1, clone2) in ccfx_out.getCloneIter():
+        op1 = []
+        op2 = []
         fidx1, start1, end1 = clone1
         fidx2, start2, end2 = clone2
         meta1 = metaDB.getMetaForPath(ccfx_out.getFilePath(fidx1))
         meta2 = metaDB.getMetaForPath(ccfx_out.getFilePath(fidx2))
         start1 = meta1.prepIdx2OrigIdx.get(start1+1, -1)
         end1 = meta1.prepIdx2OrigIdx.get(end1, -1)
+        for i in range(start1,end1+1):
+            op = meta1.line2op.get(i, -1)
+            op1.append((i,op))
         start2 = meta2.prepIdx2OrigIdx.get(start2+1, -1)
         end2 = meta2.prepIdx2OrigIdx.get(end2, -1)
-        clone1 = (fidx1, start1, end1)
-        clone2 = (fidx2, start2, end2)
+        for i in range(start2,end2+1):
+            op = meta2.line2op.get(i, -1)
+            op2.append((i,op))
+        clone1 = (fidx1, start1, end1, op1)
+        clone2 = (fidx2, start2, end2, op2)
         if clone1[0] < clone2[0]:
             clone = (clone1, clone2)
         else:
