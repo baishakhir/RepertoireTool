@@ -115,16 +115,20 @@ def convert_ccfx_output(pb, lang, is_new):
         fidx2, start2, end2 = clone2
         meta1 = metaDB.getMetaForPath(ccfx_out.getFilePath(fidx1))
         meta2 = metaDB.getMetaForPath(ccfx_out.getFilePath(fidx2))
+
         start1 = meta1.prepIdx2OrigIdx.get(start1+1, -1)
         end1 = meta1.prepIdx2OrigIdx.get(end1, -1)
-        for i in range(start1,end1+1):
-            op = meta1.line2op.get(i, -1)
-            op1.append((i,op))
         start2 = meta2.prepIdx2OrigIdx.get(start2+1, -1)
-        end2 = meta2.prepIdx2OrigIdx.get(end2, -1)
+        end2 = end2 = meta2.prepIdx2OrigIdx.get(end2, -1)
+
+        for i in range(start1,end1+1):
+            op = meta1.line2op.get(i, "X")
+            op1.append((i,op))
+
         for i in range(start2,end2+1):
-            op = meta2.line2op.get(i, -1)
+            op = meta2.line2op.get(i, "X")
             op2.append((i,op))
+
         clone1 = (fidx1, start1, end1, op1)
         clone2 = (fidx2, start2, end2, op2)
         if clone1[0] < clone2[0]:
