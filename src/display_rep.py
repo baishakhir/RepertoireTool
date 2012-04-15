@@ -61,7 +61,7 @@ class RepOutput(QtGui.QMainWindow):
     def process_clone(self):
         rep_output = RepertoireOutput()
         print self.repOutputPath
-        rep_output.loadFromFile(self.repOutputPath)
+        rep_output.loadFromFile(self.repOutputPath,1)
 
         for index, fileName in rep_output.getFileIter():
             if config.DEBUG == 2:
@@ -71,10 +71,12 @@ class RepOutput(QtGui.QMainWindow):
             listItem.setText(0,str(index))
             listItem.setText(1,fileName)
 
-        for indx, (cl1, cl2) in rep_output.getCloneIter():
+        for indx,(cl1, cl2,metric) in rep_output.getCloneIter():
             fidx1, start1, end1 = cl1
             fidx2, start2, end2 = cl2
-            metric = max(end1 - start1, end2 - start2)
+            metric = int(metric)
+#            metric = max(end1 - start1, end2 - start2)
+            
 
             if (config.DEBUG == 2):
                 print line

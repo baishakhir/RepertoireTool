@@ -51,10 +51,11 @@ class RepDisplay(QtGui.QMainWindow):
             for lineno,line in enumerate(lineList):
                 if (lineno < start_display or lineno > end_display):
                     continue
+                textcolor = QtGui.QColor("black")
                 if (lineno >= start and lineno <= end):
-                    textcolor = QtGui.QColor("red")
-                else:
-                    textcolor = QtGui.QColor("black")
+                    if line.startswith('+') or line.startswith('-'):
+                        textcolor = QtGui.QColor("red")
+                    
                 if lineno is start:
                     textBox.setFocus()
                 textBox.setTextColor(textcolor)
