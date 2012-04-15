@@ -72,69 +72,84 @@ class RepertoireOutput:
 
         return hunk
         
+    def getOpHash(self,op_list):
+        operations = {"ADD":'+', "DELETE":'-',"MODIFIED":'!',"NOCHANGE":'n','X':'x'}
+        op_hash = {}
+        for item in op_list:
+            op_hash[item[0]] = operations[item[1]]
+        return op_hash
+    
+    def filterByOp(self,clone):
+        return clone
     def processClones(self,indx,clone,fd):
-        operations = {"ADD":'+', "DELETE":'-',"MODIFIED":'!',"NOCHANGE":'n'}
+        
         clone1 = clone[0]
         clone2 = clone[1]
         op1 = clone1[3]
         op2 = clone2[3]
+        clones = []
         
         print "=========================================="
         print op1
-        print op2        
+        print op2
+        op1_hash = self.getOpHash(op1)
+        op2_hash = self.getOpHash(op2)
+        print op1_hash
+        print op2_hash
+                
         #First partition the clone regions in contiguous hunk
         hunk1 = self.getAdjHunk(op1)
         hunk2 = self.getAdjHunk(op2)
 
         if len(hunk1) == len(hunk2):
             for i in range(len(hunk1)):
-                print("{0}\t{1}.{2}\t{3}.{4}".format(indx,
-                                                     clone1[0], hunk1[i],
-                                                     clone2[0], hunk2[i]))
-                fd.write("{0}\t{1}.{2}\t{3}.{4}".format(indx,
-                                                     clone1[0], hunk1[i],
-                                                     clone2[0], hunk2[i]))
-                fd.write(os.linesep)
+                start1,end1 = hunk1[i].split('-')
+                start2,end2 = hunk2[i].split('-')
+                cl1=(clone1[0],start1,end1)
+                cl2=(clone2[0],start2,end2)
+                clones.append((indx,cl1,cl2))
         else:  
-            #uncommon case
-            if len(hunk1) > len(hunk2):
-                start2 = end2 = clone2[1]
-                for i in range(len(hunk1)):
-                    start1,end1 = hunk1[i].split('-')
+            #uncommon case:
+            high = 1
+            hunk_max = hunk1
+            hunk_min = hunk2
+            start = clone2[1]
+            op = op2                               
+            if len(hunk1) < len(hunk2):
+                high = 2
+                hunk_max = hunk2
+                hunk_min = hunk1
+                start = clone1[1]
+                op = op1
+                
+            start2 = start
+            for i in range(len(hunk_max)):
+                    start1,end1 = hunk_max[i].split('-')
                     hunk_len = int(end1) - int(start1)  
                     end2 = start2 + hunk_len
-                    print("{0}\t{1}.{2}-{3}\t{4}.{5}-{6}".format(indx,
-                                                     clone1[0], start1,end1,
-                                                     clone2[0], start2,end2))
-                    fd.write("{0}\t{1}.{2}-{3}\t{4}.{5}-{6}".format(indx,
-                                                     clone1[0], start1,end1,
-                                                     clone2[0], start2,end2))
-                    fd.write(os.linesep)
-                    index = end2 - clone2[1]+1
+                    if high is 1:
+                        cl1 = (clone1[0],start1,end1)
+                        cl2 = (clone2[0],start2,end2)
+                    else:
+                        cl1 = (clone1[0],start2,end2)
+                        cl2 = (clone2[0],start1,end1)
+                    clones.append((indx,cl1,cl2))
+                    index = end2 - start + 1
                     print "index = %d" % (index)
-                    
-                    while index < len(op2) and 'X' in op2[index]:
+                    while index < len(op) and 'X' in op[index]:
                         index += 1
-                    start2 = clone2[1] + index
-            else:
-                start1 = end1 = clone1[1]
-                for i in range(len(hunk2)):
-                    start2,end2 = hunk2[i].split('-')
-                    hunk_len = int(end2) - int(start2)
-                    end1 = start1 + hunk_len
-                    print("{0}\t{1}.{2}-{3}\t{4}.{5}-{6}".format(indx,
-                                                     clone1[0], start1,end1,
-                                                     clone2[0], start2,end2))
-                    fd.write("{0}\t{1}.{2}-{3}\t{4}.{5}-{6}".format(indx,
-                                                     clone1[0], start1,end1,
-                                                     clone2[0], start2,end2))
-                    fd.write(os.linesep)
-                    index = end1 - clone1[1]+1
-                    print "index = %d" % (index)
-                    while index < len(op1) and 'X' in op1[index]:
-                        index += 1
-                    start1 = clone1[1] + index         
-     
+                    start2 = start + index
+                
+        for i in range(len(clones)):
+            self.filterByOp(clones[i])
+            index = clones[i][0]
+            cl1 = clones[i][1]
+            cl2 = clones[i][2]
+            print("{0}\t{1}.{2}-{3}\t{4}.{5}-{6}".format(index,
+                                                     cl1[0], cl1[1],cl1[2],
+                                                     cl2[0], cl2[1],cl2[2]))
+
+                
          
     def writeToFile(self, output_path):
         out = open(output_path, 'w')
