@@ -25,8 +25,17 @@ class CCFXEntryPoint:
             option_sep = "-is"
         else:
             option += "w+"
-
-        cmd_str = (
+        
+        if dir0 == dir1:
+            cmd_str = (
+            '{0} d {1} -dn {2} -b {3} -o {4}'.format(
+                self.ccfxPath,
+                lang,
+                dir0,
+                self.tokenSize,
+                tmp_out_path))
+        else:
+            cmd_str = (
             '{0} d {1} -dn {2} {3} -dn {4} {5} -b {6} -o {7}'.format(
                 self.ccfxPath,
                 lang,
@@ -40,7 +49,7 @@ class CCFXEntryPoint:
         print "CCFX: generating " + os.path.basename(tmp_out_path)
         if config.DEBUG is True:
             print cmd_str
-
+        print cmd_str
 #        worked = 0 == os.system(cmd_str)
         proc = Popen(cmd_str,shell=True,stdout=PIPE,stderr=PIPE)
         proc.wait()

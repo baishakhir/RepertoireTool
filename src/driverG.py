@@ -186,6 +186,8 @@ class RepWizard(QtGui.QWizard):
         self.ui.hSuffLine.setText(h)
         self.ui.checkBox.setChecked(True)
         self.ui.DirLine_ccfx.setText(ccfx_path)
+        self.ui.comboBox_group.setCurrentIndex(0)
+        self.ui.comboBox_file.setCurrentIndex(0)
 #        self.ui.DirLine_ccfx.setText("/home/bray/RepertoireTool/ccFinder")
 
     def setTestValues_files(self, file0, file1, tmp, j, c, h,ccfx_path):
@@ -217,8 +219,10 @@ if __name__ == "__main__":
                 )
     elif len(sys.argv) > 1 and 'braytest' == sys.argv[1]:
         myapp.setTestValues(
-                '/home/bray/myTool/RepertoireTool/data/unified_free',
-                '/home/bray/myTool/RepertoireTool/data/unified_net',
+#                '/home/bray/myTool/RepertoireTool/data/unified_free',
+#                '/home/bray/myTool/RepertoireTool/data/unified_free',
+                '/home/bray/myTool/RepertoireTool/src/joda-time',
+                '/home/bray/myTool/RepertoireTool/src/joda-time',
                 '/home/bray/myTool/RepertoireTool/src',
                 '.java',
                 '.c',

@@ -27,6 +27,7 @@ class RepertoireModel:
     def setDiffPaths(self, path0 = None, path1 = None, isDirectory = True):
         path0 = str(path0)
         path1 = str(path1)
+        
         self.ccfx.isDirectory = self.processDirectory = isDirectory
         if (isDirectory is True) and (not os.path.isdir(path0) or
             not os.path.isdir(path1)):
@@ -97,9 +98,10 @@ class RepertoireModel:
 
 
     def filterDiffProjs(self, interface):
-      # 3 different file formats, 2 operations each (filter/convert) 
+      # 3 different file formats, 2 operations each (filter/convert)     
         self.num_operations = len(os.listdir(self.paths['proj0'])) * 3 * 2
-        self.num_operations += len(os.listdir(self.paths['proj1'])) * 3 * 2
+        if self.paths['proj0'] != self.paths['proj1']:
+            self.num_operations += len(os.listdir(self.paths['proj1'])) * 3 * 2
         self.num_operations += 2*6 #2 ccFinder call for all 6 output files
         self.operations_so_far = IntegerWrapper(0)
 
@@ -112,8 +114,10 @@ class RepertoireModel:
                     interface.progress('Filtering {0} files'.format(lang),
                             self.operations_so_far.value / float(self.num_operations))
                     input_path = self.paths[proj] + os.sep + file_name
+#                    out_path = (self.pb.getFilterOutputPath(proj, lang) +
+#                            ('%04d' % i) + '.' + self.suffixes[lang])
                     out_path = (self.pb.getFilterOutputPath(proj, lang) +
-                            ('%04d' % i) + '.' + self.suffixes[lang])
+                            file_name + '.' + self.suffixes[lang])
                     (ok, gotsome) = the_filter.filterDiff(input_path, out_path)
                     # this is actually tricky, if we got some output for java
                     # in one project but not the other, then we know that
@@ -122,11 +126,16 @@ class RepertoireModel:
                     if not ok:
                         return ('Error processing: ' + file_name, False)
                     self.operations_so_far.incr()
+            if self.paths['proj0'] == self.paths['proj1']:
+                print "filterDiffProjs: two paths same, breaking!!"
+                break
 
+    
     def filterDiffFiles(self, interface):
         # 3 different file formats, 2 operations each (filter/convert)
         self.num_operations =  3 * 2
-        self.num_operations += 3 * 2
+        if self.paths['proj0'] != self.paths['proj1']:
+            self.num_operations += 3 * 2
         self.operations_so_far = IntegerWrapper(0)
 
         input_file1 = self.paths['proj0']
@@ -140,7 +149,6 @@ class RepertoireModel:
             print "lang2 = " + lang2
             return False
 
-        i = 0
         for proj in ['proj0', 'proj1']:
             for lang in ['java', 'cxx', 'hxx']:
                 the_filter = self.filters[lang]
@@ -150,7 +158,8 @@ class RepertoireModel:
                         self.operations_so_far.value / float(self.num_operations))
                 input_path = self.paths[proj]
                 out_path = (self.pb.getFilterOutputPath(proj, lang) +
-                        ('%04d' % i) + '.' + self.suffixes[lang])
+                        os.path.basename(input_path) + '.' + self.suffixes[lang])
+ 
                 (ok, gotsome) = the_filter.filterDiff(input_path, out_path)
                 # this is actually tricky, if we got some output for java
                 # in one project but not the other, then we know that
@@ -159,6 +168,9 @@ class RepertoireModel:
                 if not ok:
                     return ('Error processing: ' + file_name, False)
                 self.operations_so_far.incr()
+            if self.paths['proj0'] == self.paths['proj1']:
+                print "filterDiffFiles: two paths same, breaking!!"
+                break
 
 
     def filterDiffs(self, interface):
@@ -206,8 +218,13 @@ class RepertoireModel:
                     lang, is_new = False, is_tmp = False)
             new_out = clone_path + self.pb.getCCFXOutputFileName(
                     lang, is_new = True, is_tmp = False)
+            
+            if self.paths['proj0'] == self.paths['proj1']:
+                old_path1 = old_path0
+                new_path1 = new_path0   
+                    
             worked = worked and self.ccfx.processPair(
-                    old_path0, old_path1, tmp_old_out, old_out, lang)
+                            old_path0, old_path1, tmp_old_out, old_out, lang)
             interface.progress('ccFinderX executing',
                 self.operations_so_far.incr() / float(self.num_operations))
             worked = worked and self.ccfx.processPair(
