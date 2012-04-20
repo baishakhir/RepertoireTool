@@ -44,44 +44,44 @@ class opFilter:
         if not ('+' in opStr or '-' in opStr or '!' in opStr):
             isChanged = False
         return isChanged
-                 
+
     def filterByOp(self,clone):
         opStr1 = ""
-        opStr2 = ""          
+        opStr2 = ""
         indx1,start1,end1 = clone[1]
         indx2,start2,end2 = clone[2]
-        
+
         for i in range(start1,end1+1):
-            opStr1 += self.op1_hash.get(i,-1)
+            opStr1 += str(self.op1_hash.get(i,-1))
         for i in range(start2,end2+1):
-            opStr2 += self.op2_hash.get(i,-1)
+            opStr2 += str(self.op2_hash.get(i,-1))
 
         if config.DEBUG is True:
-            print "start1 = %d, end1 = %d, ops = %s" % (start1,end1,opStr1)       
+            print "start1 = %d, end1 = %d, ops = %s" % (start1,end1,opStr1)
             print "start2 = %d, end2 = %d, ops = %s" % (start2,end2,opStr2)
-        
-#        if ((self.hasChanged(opStr1) is False) or 
+
+#        if ((self.hasChanged(opStr1) is False) or
 #            (self.hasChanged(opStr2) is False)):
         if not (self.hasChanged(opStr1) and self.hasChanged(opStr2)):
             return None
 
         idx = NGram(N=config.NGRAM)
         ngram1 = list(idx.ngrams(opStr1))
-        ngram2 = list(idx.ngrams(opStr2))   
+        ngram2 = list(idx.ngrams(opStr2))
         metric = self.compareList(ngram1,ngram2)
-        
+
         return metric
-    
+
     def compareList(self,list1,list2):
 #        Todo: need to update:
 #        similarity between + and !; - and !
-        metric = 0        
+        metric = 0
         list_low = list1
         list_high = list2
         if len(list1) > len(list2):
             list_low = list2
             list_high = list1
-        
+
         index2 = -1
         for index1,item1 in enumerate(list_low):
             start = index2 + 1
@@ -89,21 +89,21 @@ class opFilter:
             if end > len(list_high):
                 end = len(list_high)
             for index2 in range(start,end): #max search the next one
-                item2 = list_high[index2]           
+                item2 = list_high[index2]
                 if item1 == item2:
-                    if self.hasChanged(item1) and self.hasChanged(item2):    
+                    if self.hasChanged(item1) and self.hasChanged(item2):
                         metric += 1
                     break
-                    
+
         return metric
-    
+
 #======================
 def test():
     filter = opFilter()
-    
+
     opStr1 = "nnn+"
     opStr2 = "nn+"
-    
+
     idx = NGram(N=config.NGRAM)
     l1 = list(idx.ngrams(opStr1))
     l2 = list(idx.ngrams(opStr2))

@@ -41,26 +41,31 @@ class CCFXMetaMapping:
     def hasInputPath(self, input_path):
         return not self.getMetaForPath is None
 
-def convert_ccfx_output(pb, lang, is_new):
+def convert_ccfx_output(pb, proj, lang, is_new):
     metaDB = CCFXMetaMapping()
     # maps from ccfx input paths to meta objects representing the files
-    for proj in [PathBuilder.PROJ0, PathBuilder.PROJ1]:
-        filter_path = pb.getFilterOutputPath(proj, lang)
-        conv_path   = pb.getLineMapPath(proj, lang, is_new)
-        ccfx_i_path = pb.getCCFXInputPath(proj, lang, is_new)
-        ccfx_p_path = pb.getCCXFPrepPath(proj, lang, is_new)
-        for name in os.listdir(filter_path):
-            meta = CCFXMetaData(
-                    ccfx_i_path + name,
-                    ccfx_p_path + pb.findPrepFileFor(ccfx_p_path, name),
-                    conv_path + pb.makeLineMapFileName(name),
-                    filter_path + name)
-            metaDB.addFile(meta)
+    #for proj in [PathBuilder.PROJ0, PathBuilder.PROJ1]:
+    filter_path = pb.getFilterOutputPath(proj, lang)
+    conv_path   = pb.getLineMapPath(proj, lang, is_new)
+    ccfx_i_path = pb.getCCFXInputPath(proj, lang, is_new)
+    ccfx_p_path = pb.getCCXFPrepPath(proj, lang, is_new)
+    print "filter_path = " + filter_path
+    print "conv_path = " + conv_path
+    print "ccfx_i_path = " + ccfx_i_path
+    print "ccfx_p_path = " + ccfx_p_path
+    for name in os.listdir(filter_path):
+        meta = CCFXMetaData(
+                ccfx_i_path + name,
+                ccfx_p_path + pb.findPrepFileFor(ccfx_p_path, name),
+                conv_path + pb.makeLineMapFileName(name),
+                filter_path + name)
+        metaDB.addFile(meta)
 
+    print metaDB
     # we have our files, now map line numbers in the prep files to input files
     for meta in metaDB.getMetas():
 
-        if config.DEBUG is True:
+        if config.DEBUG is False:
             print "prep file = " + meta.ccfxPrep
             print "conv file = " + meta.filterConv
 
@@ -99,10 +104,13 @@ def convert_ccfx_output(pb, lang, is_new):
 
     files = {}
     for fileIdx, path in ccfx_out.getFileIter():
+        print fileIdx
+        print path
         if not metaDB.hasInputPath(path):
             raise Exception(
                     "Couldn't find meta information for file: {0}".format(
                         path))
+        print ">>>>>>> " + path
         meta = metaDB.getMetaForPath(path)
         files[fileIdx] = meta.filterOutput
 

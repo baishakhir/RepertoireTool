@@ -12,12 +12,12 @@ class RepertoireModel:
         self.processDirectory = True
         self.num_operations = 0
         self.operations_so_far = IntegerWrapper(0)
-        self.ccfx = CCFXEntryPoint('../ccFinder/ccfx',40,True,True)
+        self.ccfx = CCFXEntryPoint('/home/bray/myTool/RepertoireTool/ccFinder/ccfx',10,True,True)
         self.flags = {"No":True, "Yes":False}
         self.path = {}
         self.isProcessDiff = False
         self.tmpPath = None
-
+        self.outPath = None
 
 
     def setDiffPath(self, path = None):
@@ -32,25 +32,28 @@ class RepertoireModel:
         projNo = len(self.path)
         proj = 'proj' + str(projNo)
         self.path[proj] = path
-        print self.path
+#        print self.path
+        return True
+
+    def setOutDirectory(self, path):
+        #Just setting the outer directory
+        path = str(path)
+        if not (path.startswith("/home") or path.startswith("~/")):
+            path = os.getcwd() + os.sep + path
+
+
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        self.outPath = path
+        print "output files will be stored at " + self.outPath
         return True
 
     def setTmpDirectory(self, path):
         path = str(path)
         if not os.path.isdir(path):
             os.mkdir(path)
-
-        tmpDir = os.path.basename(self.path['proj0'])
-
-        if self.isProcessDiff is True:
-            uniq = tmpDir
-        else:
-            uniq = 'repertoire_tmp_' + str(int(os.times()[4] * 100))
-
-        tmpPath = path + os.sep + uniq
-        os.mkdir(tmpPath)
-        self.tmpPath = tmpPath
-        print "output files will be stored at " + tmpPath
+        self.tmpPath = path
+        print "output files will be stored at " + self.tmpPath
         return True
 
     def setSuffixes(self, jSuff = '', cSuff = '', hSuff = ''):
@@ -107,7 +110,6 @@ class RepertoireModel:
         self.num_operations += len(os.listdir(path)) * 3
         self.operations_so_far = IntegerWrapper(0)
 
-
         for lang in ['java', 'cxx', 'hxx']:
            the_filter = self.filters[lang]
            for i, file_name in enumerate(os.listdir(path)):
@@ -149,95 +151,91 @@ class RepertoireModel:
         progressSoFar = (self.operations_so_far.value / float(self.num_operations))*100
         print "%s..: %f" % (msg,progressSoFar)
 
-    def processDiffs(self):
+
+    def processDiffs(self,proj,path):
         self.got_some = {'java':True, 'cxx':True, 'hxx':True}
+        print ">>>> tmpPath = " + self.tmpPath
         self.pb = PathBuilder(self.tmpPath, force_clean = True)
 
-        for proj,path in self.path.items():
-            print proj + "," + path
-            if os.path.isdir(path) is True:
+        if os.path.isdir(path) is True:
                 self.filterDiffProj(proj)
-            elif os.path.isfile(path) is True:
+        elif os.path.isfile(path) is True:
                 self.filterDiffFile(proj)
-            else:
-                return ('Invalid path : ' + path, False)
+        else:
+            return ('Invalid path : ' + path, False)
+
+        # Second, change each diff into ccFinder input format
+        converter = CCFXInputConverter()
+        progress = (self.operations_so_far.incr() / float(self.num_operations))*100
+        callback = lambda: self.progress('Converting to ccfx input format')
+
+        converter.convert(proj, self.pb, callback)
+
+        self.num_operations = 3 * 2
+        self.operations_so_far = IntegerWrapper(0)
+
+        return ("Converting diffs to ccFinder compatible format is done",True)
 
 
-            # Second, change each diff into ccFinder input format
-            converter = CCFXInputConverter()
-            progress = (self.operations_so_far.incr() / float(self.num_operations))*100
-            callback = lambda: self.progress(
-                    'Converting to ccfx input format')
-#            converter.convert(self.pb, callback)
-            converter.convert(proj, self.pb, callback)
+    def processDiff(self):
+        for proj,path in self.path.items():
+            self.processDiffs(proj, path)
 
-            #new and old for 3 langs
-            self.num_operations = 3 * 2
-            self.operations_so_far = IntegerWrapper(0)
+    def runCCFinderSelf(self,proj,path):
+        clone_path = self.pb.getCCFXOutputPath()
+        # Third, call ccfx for each directory
+        worked = True
+        for lang in ['java', 'cxx', 'hxx']:
+            if not self.got_some[lang]:
+                self.progress('ccFinderX executing')
+                continue
+            old_path = self.pb.getCCFXInputPath(proj, lang, False)
+            new_path = self.pb.getCCFXInputPath(proj, lang, True)
 
-            return ("Converting diffs to ccFinder compatible format is done",True)
-    #
-    #
-    #        clone_path = self.pb.getCCFXOutputPath()
-    #        # Third, call ccfx for each directory
-    #        worked = True
-    #        for lang in ['java', 'cxx', 'hxx']:
-    #            if not self.got_some[lang]:
-    #                interface.progress('ccFinderX executing',
-    #                                   self.operations_so_far.incr() / float(self.num_operations))
-    #                continue
-    #            old_path0 = self.pb.getCCFXInputPath(PathBuilder.PROJ0, lang, False)
-    #            old_path1 = self.pb.getCCFXInputPath(PathBuilder.PROJ1, lang, False)
-    #            new_path0 = self.pb.getCCFXInputPath(PathBuilder.PROJ0, lang, True)
-    #            new_path1 = self.pb.getCCFXInputPath(PathBuilder.PROJ1, lang, True)
-    #            tmp_old_out = clone_path + self.pb.getCCFXOutputFileName(
-    #                    lang, is_new = False, is_tmp = True)
-    #            tmp_new_out = clone_path + self.pb.getCCFXOutputFileName(
-    #                    lang, is_new = True, is_tmp = True)
-    #            old_out = clone_path + self.pb.getCCFXOutputFileName(
-    #                    lang, is_new = False, is_tmp = False)
-    #            new_out = clone_path + self.pb.getCCFXOutputFileName(
-    #                    lang, is_new = True, is_tmp = False)
-    #
-    #            if self.paths['proj0'] == self.paths['proj1']:
-    #                old_path1 = old_path0
-    #                new_path1 = new_path0
-    #
-    #            worked = worked and self.ccfx.processPair(
-    #                            old_path0, old_path1, tmp_old_out, old_out, lang)
-    #            interface.progress('ccFinderX executing',
-    #                self.operations_so_far.incr() / float(self.num_operations))
-    #            worked = worked and self.ccfx.processPair(
-    #                    new_path0, new_path1, tmp_new_out, new_out, lang)
-    #            interface.progress('ccFinderX executing',
-    #                self.operations_so_far.incr() / float(self.num_operations))
-    #        if not worked:
-    #            return ('ccFinderX execution failed', False)
-    #
-    #         # Fourth, build up our database of clones
-    #        print "Repertoire filtering...."
-    #        #new and old for 3 langs
-    #        self.num_operations = 3 * 2
-    #        self.operations_so_far = IntegerWrapper(0)
-    #
-    #        for lang in ['java', 'cxx', 'hxx']:
-    #            if not self.got_some[lang]:
-    #                interface.progress('Repertoire filtering based on operation',
-    #                                   self.operations_so_far.incr() / float(self.num_operations))
-    #                continue
-    #            for is_new in [True, False]:
-    #                output = convert_ccfx_output(self.pb, lang, is_new)
-    #                rep_out_path = self.pb.getRepertoireOutputPath(lang, is_new)
-    #                suffix = '_old.txt'
-    #                if is_new:
-    #                    suffix = '_new.txt'
-    #                output.writeToFile(rep_out_path + lang + suffix)
-    #                interface.progress('Repertoire filtering based on operation',
-    #                                   self.operations_so_far.incr() / float(self.num_operations))
-    #
-    #
-    #        print "Processing successful!!"
-    #        return ('Processing successful', True)
+            tmp_old_out = clone_path + self.pb.getCCFXOutputFileName(
+                    lang, is_new = False, is_tmp = True)
+            tmp_new_out = clone_path + self.pb.getCCFXOutputFileName(
+                    lang, is_new = True, is_tmp = True)
+            old_out = clone_path + self.pb.getCCFXOutputFileName(
+                    lang, is_new = False, is_tmp = False)
+            new_out = clone_path + self.pb.getCCFXOutputFileName(
+                    lang, is_new = True, is_tmp = False)
+
+            worked = worked and self.ccfx.processPairSelf(
+                            old_path, tmp_old_out, old_out, lang)
+            self.progress('ccFinderX executing')
+
+            worked = worked and self.ccfx.processPairSelf(
+                    new_path, tmp_new_out, new_out, lang)
+            self.progress('ccFinderX executing')
+        if not worked:
+            return ('ccFinderX execution failed', False)
+
+        self.runRep(proj)
+
+
+#        #new and old for 3 langs
+    def runRep(self,proj):
+        print "Repertoire filtering...."
+        self.num_operations = 3 * 2
+        self.operations_so_far = IntegerWrapper(0)
+
+        for lang in ['java', 'cxx', 'hxx']:
+            if not self.got_some[lang]:
+                self.progress('Repertoire filtering based on operation')
+                continue
+            for is_new in [True, False]:
+                output = convert_ccfx_output(self.pb,proj,lang, is_new)
+                rep_out_path = self.pb.getRepertoireOutputPath(lang, is_new)
+                suffix = '_old.txt'
+                if is_new:
+                    suffix = '_new.txt'
+                output.writeToFile(rep_out_path + lang + suffix)
+                self.progress('Repertoire filtering based on operation')
+
+
+        print "Processing successful!!"
+        return ('Processing successful', True)
 
 
 class IntegerWrapper:
