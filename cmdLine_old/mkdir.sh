@@ -1,0 +1,4 @@
+mkdir ccFinderInputFiles_new
+mkdir ccFinderInputFiles_old
+mkdir conv_old
+mkdir conv_new

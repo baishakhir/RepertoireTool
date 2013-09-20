@@ -1,0 +1,18 @@
+Repertoire is a tool based on CCFinderX that identifies similar code in program patches.
+Therefore it can identify ported code from one project to another.
+
+Following steps show how REPERTOIRE works:
+
+1. Identify similar edit contents using CCFinderX
+	- Identify revisions that will be considered in experiment (usually retrieve tags from cvs log). Populate revision.csv with the selected version from log output
+	- Create patch of the selected program versions. Generate diff.sh by running "revision.py" on revision.csv. This will create diff.sh and then run ./diff.sh
+	- Covert the downloaded patches in previous steps to CCFinder compatible format (./convCCFinder.py diff.c). The output is say, ccDiff.c
+Run CCFinder on ccDiff.c "./ccfx d cpp -dn ~/project-bray/BSD/NetBsd/ccFinderInputFiles -is -dn ~/project-bray/BSD/OpenBsd/ccFinderInputFiles -w f-w-g+";
+	- ./ccfx p a.ccfxd > ccDiff.txt
+
+2. Identify Edit operation sequences
+3. Match Bi-gram
+4. Compute patch Similarity
+	- ./compMetric.py version ccDiff.txt (0 for old version, 1 for new version) .... say the outputs are old.txt and new.txt
+	- ./filterByDate.py old.txt new.txt (This will filter out the matching pairs based on release dates).... this will combine the filtered output to a file say, out.txt
+	- For BSD: detect_source.py input1.txt input2.txt to find common origin in ported edits

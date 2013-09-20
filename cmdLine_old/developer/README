@@ -1,0 +1,24 @@
+1. Run the script ./process_diff_dev.py input_diff.c
+ 
+To extract developer's information corresponding to each changed line, this script extracts the original source file line number from the original diff and stores it in a .csv file in the following format:
+   diff_line | source_line | file_name
+==========================================================================
+2. conv_annotate.py: parses an annotate file FOO and create a directory FOO which contains .csv files corresponding to each source file mentioned in FOO.
+The .csv files are in the form:
+source_line_number,"source code",developer,commit_date,file_version
+
+==========================================================================
+3. dev.py : maps each diff line with corresponding author.
+  
+  If foo.csv is output of step 1, dev.py takes foo.csv as its input and 
+  maps diff_line to author with the information found in step 2.
+
+  The output is stored in DEV_DIR
+
+==========================================================================
+4. calDev.py: calculate percentage and entropy of developers involved in ported changes.
+   "Usage: calDev.py input.txt directory"
+   "input.txt is the output of REPERTOIRE, i.e., converted output from ccFinder"
+	"directory is the DEV_DIR from step 3"
+
+

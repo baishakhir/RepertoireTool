@@ -1,0 +1,3 @@
+./common_dev.py ../../bsd_data/token_size_output/40/out_txt/net_free.txt ../../bsd_data/token_size_output/40/out_txt/open_free.txt /home/bray/project-bray/BSD/FreeBsd/dev/ freebsd_dev.txt > freebsd_avg.txt
+./common_dev.py ../../bsd_data/token_size_output/40/out_txt/open_free.txt ../../bsd_data/token_size_output/40/out_txt/net_open.txt /home/bray/project-bray/BSD/OpenBsd/dev/ openbsd_dev.txt > openbsd_avg.txt
+./common_dev.py ../../bsd_data/token_size_output/40/out_txt/net_free.txt ../../bsd_data/token_size_output/40/out_txt/net_open.txt /home/bray/project-bray/BSD/NetBsd/dev/ netbsd_dev.txt > netbsd_avg.txt
